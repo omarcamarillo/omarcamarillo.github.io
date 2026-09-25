@@ -1,0 +1,2501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PDV Mariscos">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <title>PDV Móvil Taquería de Mariscos</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- jsPDF: generación del corte diario en PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --pdv-accent: #0f172a;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    /* DISEÑO RESPONSIVE */
+    html, body {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    .pdv-shell {
+      width: 100%;
+      max-width: 1400px;
+      min-height: 100vh;
+    }
+
+    @media (min-width: 768px) {
+      .pdv-shell {
+        min-height: calc(100vh - 32px);
+        height: calc(100vh - 32px);
+        border-radius: 28px;
+      }
+    }
+
+    @media (max-width: 767px) {
+      body {
+        align-items: stretch !important;
+        padding: 0 !important;
+      }
+      .pdv-shell {
+        min-height: 100dvh;
+        height: 100dvh;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+      .mobile-tight {
+        padding: 0.65rem !important;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      #view-menu, #view-cart {
+        padding: 1rem 1.25rem !important;
+      }
+      #products-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.65rem !important;
+      }
+    }
+
+    @media (min-width: 1280px) {
+      #products-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+    }
+
+    /* DISEÑO COMPACTO DEL CATÁLOGO Y NOTA LADO A LADO EN ESCRITORIO */
+    .pdv-shell {
+      width: 100%;
+      max-width: 1400px;
+      min-height: 100vh;
+    }
+
+    @media (min-width: 768px) {
+      .pdv-shell {
+        height: calc(100vh - 32px);
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .pdv-shell {
+        height: 100dvh;
+        min-height: 100dvh;
+        border-radius: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .pdv-shell {
+        display: grid !important;
+        grid-template-columns: minmax(320px, 0.85fr) minmax(520px, 1.65fr);
+        grid-template-rows: auto auto minmax(0, 1fr);
+        grid-template-areas:
+          "header header"
+          "nav nav"
+          "cart menu";
+      }
+
+      .pdv-shell > header { grid-area: header; }
+      .pdv-shell > #tab-btn-menu,
+      .pdv-shell > #tab-btn-cart { grid-area: nav; }
+      .pdv-shell > .bg-white.border-b.border-slate-200.grid { grid-area: nav; }
+      #view-cart {
+        grid-area: cart;
+        display: flex !important;
+        min-width: 0;
+        min-height: 0;
+        border-right: 1px solid #e2e8f0;
+        background: #f8fafc;
+      }
+      #view-menu {
+        grid-area: menu;
+        display: flex !important;
+        min-width: 0;
+        min-height: 0;
+        padding: 10px 12px !important;
+      }
+      .pdv-shell > .bg-white.border-b.border-slate-200.grid {
+        display: none !important;
+      }
+
+      #products-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px !important;
+        padding-right: 0 !important;
+      }
+
+      #view-menu > div:first-child {
+        margin-bottom: 8px !important;
+      }
+
+      #view-menu .relative input {
+        padding-top: 7px !important;
+        padding-bottom: 7px !important;
+      }
+
+      #view-cart {
+        padding: 10px 12px !important;
+      }
+
+      #view-cart > div:first-child {
+        padding: 9px !important;
+        margin-bottom: 8px !important;
+      }
+
+      #cart-items {
+        gap: 5px !important;
+      }
+
+      #cart-items > div {
+        padding: 8px !important;
+        border-radius: 10px !important;
+      }
+
+      #view-cart > div:last-child {
+        margin-top: 8px !important;
+        padding: 9px !important;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .pdv-shell {
+        grid-template-columns: minmax(350px, 0.8fr) minmax(650px, 1.7fr);
+      }
+      #products-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px !important;
+      }
+    }
+
+    @media (min-width: 1450px) {
+      #products-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+    }
+
+    /* IMPRESIÓN: mostrar únicamente el documento seleccionado.
+       Esto evita que el elemento oculto genere una página en blanco. */
+    @page {
+      size: 80mm auto;
+      margin: 0;
+    }
+
+    @media print {
+      html, body {
+        width: 80mm !important;
+        min-width: 80mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+      }
+
+      body {
+        display: block !important;
+        overflow: visible !important;
+      }
+
+      body > * {
+        display: none !important;
+      }
+
+      #printable-ticket, #printable-daily-cut {
+        position: static !important;
+        display: block !important;
+        visibility: visible !important;
+        width: 80mm !important;
+        min-height: 0 !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 4mm !important;
+        background: #fff !important;
+        color: #000 !important;
+        overflow: visible !important;
+      }
+
+      #printable-ticket *, #printable-daily-cut * {
+        visibility: visible !important;
+      }
+
+      /* Solo uno de los dos documentos puede imprimirse. */
+      body.printing-daily-cut #printable-ticket {
+        display: none !important;
+      }
+
+      body:not(.printing-daily-cut) #printable-daily-cut {
+        display: none !important;
+      }
+
+      #printable-ticket > div, #printable-daily-cut > div {
+        width: 100% !important;
+        margin: 0 !important;
+      }
+
+      #printable-ticket p, #printable-daily-cut p {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+    }
+
+    /* ===== REDISEÑO MODERNO PDV v5 ===== */
+    :root {
+      --pdv-accent: #0f172a;
+      --pdv-bg: #f4f7fb;
+      --pdv-card: #ffffff;
+      --pdv-border: #e6ebf2;
+      --pdv-muted: #64748b;
+      --pdv-radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      background:
+        radial-gradient(circle at 10% 0%, rgba(14,165,233,.10), transparent 28%),
+        radial-gradient(circle at 100% 100%, rgba(99,102,241,.08), transparent 30%),
+        var(--pdv-bg) !important;
+      color: #0f172a;
+    }
+
+    .pdv-shell {
+      max-width: 1500px !important;
+      background: #f8fafc !important;
+      border: 1px solid rgba(226,232,240,.9) !important;
+      border-radius: 28px !important;
+      box-shadow: 0 24px 70px rgba(15,23,42,.14), 0 4px 16px rgba(15,23,42,.05) !important;
+    }
+
+    .pdv-shell > header {
+      padding: 16px 18px 12px !important;
+      background: rgba(255,255,255,.94) !important;
+      backdrop-filter: blur(18px);
+    }
+
+    .pdv-shell > header .w-8.h-8 {
+      width: 42px !important;
+      height: 42px !important;
+      border-radius: 14px !important;
+      background: linear-gradient(135deg, #0f172a, #334155) !important;
+      box-shadow: 0 8px 18px rgba(15,23,42,.18);
+    }
+
+    .pdv-shell > header h1 { font-size: 14px !important; letter-spacing: -.02em; }
+    .pdv-shell > header .flex.items-center.space-x-1\.5 button {
+      min-height: 40px;
+      border-radius: 12px !important;
+      padding-left: 13px !important;
+      padding-right: 13px !important;
+    }
+
+    #orders-tabs { gap: 7px !important; padding-top: 3px; }
+    #orders-tabs button {
+      min-height: 38px !important;
+      border-radius: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      background: #f8fafc !important;
+      transition: .18s ease !important;
+    }
+    #orders-tabs button:hover { transform: translateY(-1px); }
+
+    .pdv-shell > .bg-white.border-b.border-slate-200.grid {
+      padding: 5px !important;
+      gap: 5px;
+      background: #eef2f7 !important;
+      border: 0 !important;
+    }
+    #tab-btn-menu, #tab-btn-cart {
+      border: 0 !important;
+      border-radius: 13px !important;
+      min-height: 44px;
+    }
+    #tab-btn-menu.border-b-2.border-slate-900,
+    #tab-btn-cart.border-b-2.border-slate-900 {
+      background: #fff !important;
+      box-shadow: 0 3px 12px rgba(15,23,42,.08);
+    }
+
+    #view-menu, #view-cart { background: transparent !important; }
+    #view-menu { padding: 14px !important; }
+    #view-cart { padding: 14px !important; background: #f4f7fb !important; }
+
+    #search-input {
+      min-height: 46px;
+      border-radius: 14px !important;
+      border-color: #dfe6ef !important;
+      box-shadow: 0 2px 8px rgba(15,23,42,.04) !important;
+      font-size: 12px !important;
+    }
+    #search-input:focus { border-color: #94a3b8 !important; box-shadow: 0 0 0 4px rgba(15,23,42,.06) !important; }
+
+    #view-menu .flex.bg-white.p-1.rounded-xl {
+      border-radius: 14px !important;
+      padding: 4px !important;
+      background: #eaf0f6 !important;
+      border: 0 !important;
+      box-shadow: none !important;
+    }
+    #view-menu .flex.bg-white.p-1.rounded-xl button {
+      min-height: 36px;
+      border-radius: 10px !important;
+    }
+
+    #products-grid { gap: 9px !important; padding: 3px 2px 14px 2px !important; }
+    #products-grid > div {
+      height: 148px !important;
+      min-height: 148px;
+      padding: 13px !important;
+      border-radius: 18px !important;
+      border: 1px solid #e3e9f1 !important;
+      box-shadow: 0 4px 14px rgba(15,23,42,.045) !important;
+      background: rgba(255,255,255,.96) !important;
+    }
+    #products-grid > div:hover {
+      border-color: #cbd5e1 !important;
+      box-shadow: 0 10px 24px rgba(15,23,42,.09) !important;
+      transform: translateY(-2px);
+    }
+    #products-grid > div:active { transform: scale(.98) !important; }
+    #products-grid > div .w-6.h-6 {
+      width: 38px !important;
+      height: 38px !important;
+      border-radius: 12px !important;
+      background: #f1f5f9 !important;
+    }
+    #products-grid > div h3 { font-size: 12px !important; line-height: 1.25 !important; }
+    #products-grid > div .font-extrabold.text-slate-900.text-xs { font-size: 15px !important; }
+    #products-grid > div .bg-slate-100.text-slate-700 { border-radius: 9px !important; padding: 5px 8px !important; }
+
+    #view-cart > div:first-child {
+      padding: 14px !important;
+      border-radius: 18px !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 4px 14px rgba(15,23,42,.045) !important;
+    }
+    #order-name-input { min-height: 42px; border-radius: 12px !important; }
+    #view-cart .flex.bg-slate-100.p-1.rounded-xl { border-radius: 12px !important; }
+    #view-cart .flex.bg-slate-100.p-1.rounded-xl button { min-height: 36px; border-radius: 10px !important; }
+
+    #cart-items { gap: 9px !important; padding: 2px !important; }
+    #cart-items > div {
+      padding: 13px !important;
+      border-radius: 16px !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 3px 12px rgba(15,23,42,.035) !important;
+    }
+    #cart-items .bg-slate-50.rounded-lg { border-radius: 10px !important; }
+    #cart-items button { min-width: 30px; min-height: 30px; }
+
+    #view-cart > div:last-child {
+      padding: 14px !important;
+      border-radius: 18px !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 8px 22px rgba(15,23,42,.07) !important;
+    }
+    #total-val { font-size: 21px !important; letter-spacing: -.03em; }
+    #checkout-btn { min-height: 48px; border-radius: 14px !important; font-size: 12px !important; }
+    #view-cart > div:last-child > div:last-child button:first-child { min-height: 48px; border-radius: 14px !important; }
+
+    /* Modales como paneles modernos */
+    [id$="-modal"] > div {
+      border-radius: 24px !important;
+      border: 1px solid rgba(226,232,240,.9) !important;
+      box-shadow: 0 28px 80px rgba(15,23,42,.20) !important;
+    }
+    [id$="-modal"] { background: rgba(15,23,42,.46) !important; }
+    [id$="-modal"] input, [id$="-modal"] select { border-radius: 13px !important; min-height: 42px; }
+    [id$="-modal"] button { border-radius: 13px !important; }
+
+    /* Menú principal como centro de acciones */
+    #app-menu-modal > div { max-width: 460px !important; padding: 22px !important; }
+    #app-menu-modal .grid > button {
+      min-height: 112px;
+      padding: 16px !important;
+      border-radius: 17px !important;
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    #app-menu-modal .grid > button:hover { background: #fff !important; box-shadow: 0 8px 20px rgba(15,23,42,.07); transform: translateY(-1px); }
+
+    /* Paneles de resumen */
+    #daily-cut-modal .bg-slate-900, #dashboard-modal .bg-slate-900 { box-shadow: 0 10px 24px rgba(15,23,42,.14); }
+
+    /* Mejor experiencia táctil */
+    button, input, select, label { -webkit-tap-highlight-color: transparent; }
+    button { touch-action: manipulation; }
+
+    @media (max-width: 767px) {
+      body { background: #f8fafc !important; }
+      .pdv-shell {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+      .pdv-shell > header { padding: 12px 12px 9px !important; }
+      .pdv-shell > header .flex.items-center.space-x-1\.5 button:first-child span { display:none; }
+      .pdv-shell > header .flex.items-center.space-x-1\.5 button:first-child { width:40px; justify-content:center; padding:0 !important; }
+      .pdv-shell > header .flex.items-center.space-x-1\.5 button:last-child span { font-size:11px; }
+      #products-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap:8px !important; }
+      #products-grid > div { height: 136px !important; min-height:136px; padding:11px !important; }
+      #view-menu { padding: 10px !important; }
+      #view-cart { padding: 10px !important; }
+    }
+
+    @media (min-width: 900px) {
+      .pdv-shell {
+        grid-template-columns: minmax(360px,.82fr) minmax(620px,1.68fr) !important;
+      }
+      #view-cart { padding: 16px !important; }
+      #view-menu { padding: 16px 18px !important; }
+      #products-grid { grid-template-columns: repeat(4,minmax(0,1fr)) !important; }
+    }
+
+    @media (min-width: 1280px) {
+      #products-grid { grid-template-columns: repeat(5,minmax(0,1fr)) !important; }
+    }
+
+
+    /* ===== v6: módulos administrativos y stock ===== */
+    .inventory-stock-low { color:#b45309; background:#fffbeb; border-color:#fde68a; }
+    .inventory-out { color:#b91c1c; background:#fef2f2; border-color:#fecaca; }
+    .inventory-ok { color:#047857; background:#ecfdf5; border-color:#a7f3d0; }
+    .admin-stat { min-height: 84px; }
+    #app-menu-modal .grid > button svg { transition: transform .18s ease; }
+    #app-menu-modal .grid > button:hover svg { transform: scale(1.08); }
+    @media (max-width: 767px) {
+      #app-menu-modal > div { max-height: 92dvh; overflow-y:auto; }
+      .inventory-mobile-stack { display:block !important; }
+    }
+
+
+    /* ===== v7: rediseño de CONFIGURACIÓN y PRODUCTOS ===== */
+    .settings-panel, .products-panel { border: 1px solid #e2e8f0; }
+    .settings-hero, .products-hero { background: linear-gradient(135deg,#ffffff 0%,#f8fafc 100%); border-bottom:1px solid #e8edf3; }
+    .settings-icon, .products-icon { background:#0f172a; color:#fff; box-shadow:0 10px 22px rgba(15,23,42,.16); }
+    .settings-close, .products-close { background:#f1f5f9; color:#64748b; transition:.18s ease; }
+    .settings-close:hover, .products-close:hover { background:#e2e8f0; color:#0f172a; transform:scale(1.03); }
+    .settings-card { background:#fff; border:1px solid #e5eaf0; border-radius:20px; padding:16px; box-shadow:0 4px 16px rgba(15,23,42,.035); }
+    .settings-section-title { display:flex; align-items:center; gap:10px; }.settings-section-icon { width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#334155;flex:none; }
+    .settings-section-title h4 { font-size:12px;font-weight:800;color:#0f172a; }.settings-section-title p { font-size:9px;color:#94a3b8;margin-top:2px; }
+    .settings-card label:not(.settings-toggle) { display:block;font-size:10px;font-weight:800;color:#64748b;margin-bottom:6px; }
+    .settings-card input:not([type=color]):not([type=checkbox]),.settings-card select{width:100%;min-height:44px;padding:0 12px;border:1px solid #dfe6ee;border-radius:13px;background:#fff;color:#0f172a;font-size:12px;font-weight:600;outline:none;transition:.18s ease;}
+    .settings-card input:not([type=color]):not([type=checkbox]):focus,.settings-card select:focus{border-color:#94a3b8;box-shadow:0 0 0 4px rgba(15,23,42,.05)}
+    .settings-color-row{min-height:44px;display:flex;align-items:center;gap:9px;padding:6px 10px;border:1px solid #dfe6ee;border-radius:13px;background:#f8fafc}.settings-color-row input[type=color]{width:34px;height:32px;border:0;padding:0;background:transparent}.settings-color-row span{font-size:9px;color:#64748b;font-weight:600}
+    .settings-info{display:flex;align-items:center;gap:8px;padding:10px 11px;border-radius:12px;background:#f0fdf4;color:#166534;border:1px solid #dcfce7;font-size:10px;font-weight:700}
+    .settings-toggle{display:flex;align-items:center;gap:9px;padding:11px;border-radius:13px;background:#f8fafc;border:1px solid #e2e8f0;cursor:pointer}.settings-toggle input{position:absolute;opacity:0;pointer-events:none}.settings-toggle-box{width:22px;height:22px;border-radius:7px;border:1.5px solid #cbd5e1;background:#fff;display:flex;align-items:center;justify-content:center;color:transparent;flex:none}.settings-toggle input:checked + .settings-toggle-box{background:#0f172a;border-color:#0f172a;color:#fff}.settings-toggle b{display:block;font-size:11px;color:#0f172a}.settings-toggle small{display:block;font-size:9px;color:#94a3b8;margin-top:2px}
+    .settings-actions{border-top:1px solid #e8edf3;background:#f8fafc}.settings-secondary,.settings-primary{min-height:46px;border-radius:13px;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:7px}.settings-secondary{padding:0 16px;background:#fff;color:#475569;border:1px solid #dfe6ee}.settings-primary{background:#0f172a;color:#fff;padding:0 18px;box-shadow:0 8px 18px rgba(15,23,42,.13)}
+    .product-stat{min-height:70px;padding:10px 12px;border-radius:15px;background:#f8fafc;border:1px solid #e2e8f0}.product-stat span{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.04em;font-weight:800;color:#94a3b8}.product-stat b{display:block;font-size:18px;line-height:1.15;margin-top:5px;color:#0f172a}.product-stat.stat-blue{background:#eff6ff;border-color:#dbeafe}.product-stat.stat-blue span{color:#3b82f6}.product-stat.stat-blue b{color:#1d4ed8}.product-stat.stat-green{background:#ecfdf5;border-color:#d1fae5}.product-stat.stat-green span{color:#10b981}.product-stat.stat-green b{color:#047857}.product-stat.stat-amber{background:#fffbeb;border-color:#fef3c7}.product-stat.stat-amber span{color:#f59e0b}.product-stat.stat-amber b{color:#b45309}
+    .products-search,.products-filter{min-height:44px;border:1px solid #dfe6ee;border-radius:13px;background:#fff;outline:none;font-size:11px}.products-search:focus,.products-filter:focus{border-color:#94a3b8;box-shadow:0 0 0 4px rgba(15,23,42,.05)}.products-add{min-height:44px;padding:0 15px;border-radius:13px;background:#0f172a;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+    .products-list{display:grid;grid-template-columns:1fr;gap:10px}.product-admin-card{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:12px;box-shadow:0 3px 12px rgba(15,23,42,.035);transition:.18s ease}.product-admin-card:hover{border-color:#cbd5e1;box-shadow:0 8px 22px rgba(15,23,42,.07);transform:translateY(-1px)}.product-admin-card.is-out{background:#fffafa}.product-admin-main{display:flex;align-items:flex-start;gap:10px}.product-admin-icon{width:42px;height:42px;border-radius:13px;background:#f1f5f9;color:#475569;display:flex;align-items:center;justify-content:center;flex:none}.product-name-input{width:100%;min-height:38px;padding:0 9px;border:1px solid #e2e8f0;border-radius:10px;font-size:12px;font-weight:800;color:#0f172a;outline:none}.product-name-input:focus{border-color:#94a3b8;box-shadow:0 0 0 3px rgba(15,23,42,.04)}
+    .product-id,.product-category-pill,.product-status-pill{display:inline-flex;align-items:center;min-height:21px;padding:0 7px;border-radius:7px;font-size:8px;font-weight:800}.product-id{background:#f8fafc;color:#94a3b8}.product-category-pill{background:#eef2ff;color:#4f46e5}.product-status-pill{border:1px solid transparent}.product-delete{width:34px;height:34px;border-radius:10px;background:#fef2f2;color:#ef4444;display:flex;align-items:center;justify-content:center;flex:none}.product-delete:hover{background:#fee2e2}
+    .product-admin-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:11px;padding-top:11px;border-top:1px solid #f1f5f9}.product-field label{display:block;font-size:8px;font-weight:800;text-transform:uppercase;color:#94a3b8;letter-spacing:.03em;margin-bottom:5px}.product-field select,.price-input-wrap,.stock-input{width:100%;min-height:38px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;font-size:10px;font-weight:800;color:#334155;outline:none}.product-field select{padding:0 8px}.price-input-wrap{display:flex;align-items:center;overflow:hidden}.price-input-wrap span{padding-left:9px;color:#64748b;font-size:10px;font-weight:800}.price-input-wrap input{width:100%;height:36px;padding:0 8px;border:0;outline:0;font-size:11px;font-weight:800;color:#0f172a}.stock-toggle{display:flex!important;align-items:center;gap:5px;text-transform:none!important;letter-spacing:0!important;color:#475569!important}.stock-toggle input{accent-color:#0f172a}.stock-input{padding:0 8px;margin-top:4px}.stock-input.is-disabled{background:#f8fafc;color:#cbd5e1}.products-empty{min-height:220px;border:1px dashed #cbd5e1;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8}.products-empty p{font-size:12px;font-weight:800;color:#64748b;margin-top:8px}.products-empty span{font-size:9px;margin-top:3px}.products-footer{border-top:1px solid #e8edf3;background:#fff}.products-secondary,.products-save{min-height:46px;border-radius:13px;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:7px}.products-secondary{padding:0 16px;background:#fff;color:#475569;border:1px solid #dfe6ee}.products-save{flex:1;background:#0f172a;color:#fff}
+    @media (min-width:700px){.products-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:699px){.settings-panel{border-radius:28px 28px 0 0}.settings-card{padding:13px;border-radius:17px}.settings-hero{position:sticky;top:0;z-index:2}.products-filter{width:100%}.products-add{width:100%}.product-admin-fields{grid-template-columns:1fr 1fr}.product-field.stock-field{grid-column:1/-1}.product-admin-card{padding:10px}.products-panel{max-height:100dvh}}
+    @media (max-width:380px){.product-admin-fields{grid-template-columns:1fr}.product-field.stock-field{grid-column:auto}.product-stat{padding:9px}.product-stat b{font-size:16px}}
+
+  
+/* ===== v8: REDISEÑO COMPLETO RESPONSIVE DEL PDV ===== */
+@media (max-width: 767px){
+  body{overflow:hidden!important;background:#eef2f7!important}
+  .pdv-shell{width:100%!important;height:100dvh!important;min-height:100dvh!important;border-radius:0!important;border:0!important;box-shadow:none!important}
+  .pdv-shell>header{padding:10px!important}
+  .pdv-shell>header .w-8.h-8{width:38px!important;height:38px!important;border-radius:12px!important}
+  .pdv-shell>header h1{font-size:13px!important}
+  #orders-tabs{padding-bottom:2px!important}
+  #orders-tabs button{min-height:34px!important;padding:6px 10px!important;font-size:10px!important}
+  .pdv-shell>.bg-white.border-b.border-slate-200.grid{padding:4px!important;gap:4px!important}
+  #tab-btn-menu,#tab-btn-cart{min-height:42px!important;font-size:11px!important}
+  #view-menu,#view-cart{padding:9px!important}
+  #search-input{min-height:44px!important;font-size:12px!important}
+  #products-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:2px 0 14px!important}
+  #products-grid>div{height:142px!important;min-height:142px!important;padding:12px!important;border-radius:16px!important}
+  #products-grid>div h3{font-size:11px!important}
+  #view-cart>div:first-child,#view-cart>div:last-child{border-radius:16px!important;padding:11px!important}
+  #cart-items>div{padding:11px!important;border-radius:14px!important}
+  #checkout-btn,#view-cart>div:last-child>div:last-child button:first-child{min-height:50px!important}
+  [id$="-modal"]{padding:8px!important;align-items:flex-end!important}
+  [id$="-modal"]>div{width:100%!important;max-width:none!important;max-height:94dvh!important;border-radius:24px 24px 0 0!important;padding:16px!important;margin:0!important}
+  #app-menu-modal{align-items:center!important;justify-content:center!important}
+  #app-menu-modal>div{padding:16px!important;margin:0!important;border-radius:22px!important;max-height:88dvh!important;overflow-y:auto!important}
+  #app-menu-modal .grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
+  #app-menu-modal .grid>button{min-height:92px!important;padding:12px!important}
+  #settings-modal>div{max-height:94dvh!important;padding:16px!important}
+  #settings-modal section{padding:12px!important;background:#f8fafc;border:1px solid #e5e7eb;border-radius:16px;margin-bottom:10px}
+  #settings-modal section h4{font-size:10px!important;margin-bottom:9px!important}
+  #settings-modal .grid{grid-template-columns:1fr!important}
+  #settings-modal input,#settings-modal select{min-height:46px!important;font-size:12px!important}
+  #settings-modal>div>.grid{position:sticky;bottom:-16px;background:#fff;padding-top:10px;margin-top:10px!important}
+  #price-modal>div{padding:0!important;max-height:96dvh!important}
+  #price-modal>div>div:first-child{padding:14px!important}
+  #price-modal .min-w-\[820px\]{min-width:0!important}
+  #price-modal .grid-cols-\[minmax\(230px\,1\.5fr\)_90px\_115px\_110px\_110px\_44px\]{display:block!important}
+  #price-modal .grid-cols-\[minmax\(230px\,1\.5fr\)_90px\_115px\_110px\_110px\_44px\]>span{display:none!important}
+  #price-list{display:grid!important;gap:9px!important;padding:0!important}
+  #price-list>div{display:block!important;border:1px solid #e2e8f0!important;border-radius:16px!important;padding:12px!important;background:#fff!important;box-shadow:0 3px 12px rgba(15,23,42,.05)!important}
+  .inventory-mobile-stack{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+  #daily-cut-modal>div,#dashboard-modal>div,#sales-history-modal>div,#backup-modal>div{padding:16px!important}
+}
+
+/* Escritorio: paneles más limpios y consistentes */
+@media (min-width:768px){
+  [id$="-modal"]>div{border-radius:26px!important}
+  #settings-modal>div{max-width:760px!important;padding:24px!important}
+  #price-modal>div{max-width:1050px!important}
+  #app-menu-modal>div{max-width:620px!important;padding:24px!important}
+  #app-menu-modal .grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}
+  #app-menu-modal .grid>button{min-height:120px!important}
+}
+
+
+/* ===== v10: MENÚ CENTRADO + NOTAS CON COLOR Y NOMBRE ===== */
+.note-color-dot{width:18px;height:18px;border-radius:999px;border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 4px rgba(15,23,42,.18);display:inline-block}
+.note-color-option{width:42px;height:42px;border-radius:13px;border:2px solid transparent;display:flex;align-items:center;justify-content:center;transition:.15s ease;cursor:pointer}
+.note-color-option:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(15,23,42,.10)}
+.note-color-option.selected{border-color:#0f172a;box-shadow:0 0 0 3px #fff,0 0 0 5px #0f172a}
+#orders-tabs button.note-tab{min-height:38px;max-width:180px}
+#orders-tabs button.note-tab .note-tab-name{display:block;max-width:125px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.1}
+#new-order-modal{align-items:center!important;justify-content:center!important}
+#new-order-modal>div{width:min(430px,calc(100vw - 24px))!important;max-width:430px!important;margin:0!important;border-radius:24px!important}
+@media(max-width:767px){
+  #app-menu-modal{align-items:center!important;justify-content:center!important;padding:14px!important}
+  #app-menu-modal>div{margin:0!important;width:min(520px,calc(100vw - 24px))!important;max-height:88dvh!important;border-radius:24px!important;padding:18px!important}
+  #orders-tabs{align-items:center!important}
+  #orders-tabs button.note-tab{min-height:42px!important;padding:7px 11px!important}
+}
+  </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen sm:p-4 select-none">
+
+  <!-- MARCO DE TELÉFONO MÓVIL (MOBILE DESIGN) -->
+  <div class="pdv-shell bg-slate-50 sm:rounded-[36px] shadow-2xl border border-slate-200 flex flex-col overflow-hidden relative">
+
+    <!-- BARRA SUPERIOR Y SELECTOR DE NOTAS/PEDIDOS ABIERTOS -->
+    <header class="bg-white border-b border-slate-200 pt-3 pb-2 px-3 sm:px-4 shrink-0">
+      <div class="flex items-center justify-between mb-2 sm:mb-3 gap-2">
+        <div class="flex items-center space-x-2 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-sm shadow-sm">
+            <i data-lucide="utensils" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-sm text-slate-900 leading-tight">MARISCOS PDV</h1>
+            <p id="business-subtitle-display" class="text-[9px] font-semibold text-slate-400 leading-tight">Punto de Venta Móvil</p>
+            <p id="current-time" class="text-[9px] font-medium text-slate-400">00:00 PM</p>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="flex items-center space-x-1.5">
+          <button onclick="openAppMenu()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1 transition-all active:scale-95" title="Menú">
+            <i data-lucide="menu" class="w-3.5 h-3.5"></i>
+            <span>Menú</span>
+          </button>
+          <button onclick="openNewOrderModal()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center space-x-1 shadow-sm transition-all active:scale-95">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Nueva venta</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CARRUSEL DE NOTAS ABIERTAS (TABS) -->
+      <div id="orders-tabs" class="flex gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+        <!-- Renderizado dinámico de pestañas de órdenes -->
+      </div>
+    </header>
+
+    <!-- NAVEGACIÓN MÓVIL PESTAÑAS (MENÚ VS CARRITO) -->
+    <div class="bg-white border-b border-slate-200 grid grid-cols-2 text-xs font-bold shrink-0">
+      <button id="tab-btn-menu" onclick="switchMainTab('menu')" class="py-2.5 border-b-2 border-slate-900 text-slate-900 flex items-center justify-center space-x-1.5 transition-all">
+        <i data-lucide="grid" class="w-4 h-4"></i>
+        <span>Catálogo</span>
+      </button>
+      <button id="tab-btn-cart" onclick="switchMainTab('cart')" class="py-2.5 border-b-2 border-transparent text-slate-400 flex items-center justify-center space-x-1.5 transition-all relative">
+        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+        <span>Nota Actual</span>
+        <span id="cart-badge" class="ml-1 px-1.5 py-0.2 bg-slate-900 text-white rounded-full text-[10px] hidden">0</span>
+      </button>
+    </div>
+
+    <!-- VISTA 1: CATÁLOGO DE PRODUCTOS -->
+    <div id="view-menu" class="flex-1 flex flex-col overflow-hidden p-2.5 sm:p-4 mobile-tight">
+      
+      <div class="flex items-end justify-between mb-2 px-1 shrink-0">
+        <div><h2 class="text-base font-extrabold tracking-tight text-slate-900">Productos</h2><p class="text-[10px] text-slate-400 font-medium">Toca un producto para agregarlo a la venta</p></div>
+        <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400">Catálogo</span>
+      </div>
+
+      <!-- BUSCADOR Y FILTROS CATEGORÍA -->
+      <div class="space-y-1.5 mb-2 shrink-0">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input 
+            type="text" 
+            id="search-input" 
+            oninput="filterProducts()" 
+            placeholder="Buscar producto..." 
+            class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all shadow-sm"
+          >
+        </div>
+
+        <div class="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+          <button onclick="filterCategory('todos')" id="cat-todos" class="flex-1 py-1 rounded-lg bg-slate-900 text-white font-semibold text-[11px] transition-all">
+            Todos
+          </button>
+          <button onclick="filterCategory('tacos')" id="cat-tacos" class="flex-1 py-1 rounded-lg text-slate-600 font-semibold text-[11px] hover:bg-slate-50 transition-all">
+            Tacos
+          </button>
+          <button onclick="filterCategory('bebidas')" id="cat-bebidas" class="flex-1 py-1 rounded-lg text-slate-600 font-semibold text-[11px] hover:bg-slate-50 transition-all">
+            Bebidas
+          </button>
+          <button onclick="filterCategory('otros')" id="cat-otros" class="flex-1 py-1 rounded-lg text-slate-600 font-semibold text-[11px] hover:bg-slate-50 transition-all">
+            Otros
+          </button>
+        </div>
+      </div>
+
+      <!-- GRID DE PRODUCTOS EN 2 COLUMNAS (MÓVIL) -->
+      <div id="products-grid" class="grid grid-cols-2 gap-1.5 sm:gap-2 overflow-y-auto custom-scrollbar flex-1 align-content-start pr-0.5">
+        <!-- Renderizado dinámico -->
+      </div>
+    </div>
+
+    <!-- VISTA 2: CARRITO / DETALLE DE LA NOTA SELECCIONADA -->
+    <div id="view-cart" class="flex-1 flex flex-col overflow-hidden p-2.5 sm:p-4 hidden mobile-tight">
+      
+      <div class="flex items-end justify-between mb-2 px-1 shrink-0">
+        <div><h2 class="text-base font-extrabold tracking-tight text-slate-900">Venta actual</h2><p class="text-[10px] text-slate-400 font-medium">Revisa los productos antes de cobrar</p></div>
+      </div>
+
+      <!-- OPCIONES DE ORDEN (NOMBRE NOTA / LLEVAR) -->
+      <div class="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 mb-2 space-y-2 shrink-0 shadow-sm">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="tag" class="w-4 h-4 text-slate-400"></i>
+          <input 
+            type="text" 
+            id="order-name-input" 
+            onchange="updateOrderName(this.value)" 
+            placeholder="Nombre o Mesa del cliente..." 
+            class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
+          >
+        </div>
+
+        <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <button id="btn-aqui" onclick="setServiceType('Comer Aquí')" class="flex-1 py-1 rounded-lg bg-white shadow-sm text-slate-900 font-bold transition-all">
+            Comer Aquí
+          </button>
+          <button id="btn-llevar" onclick="setServiceType('Para Llevar')" class="flex-1 py-1 rounded-lg text-slate-500 hover:text-slate-900 transition-all">
+            Para Llevar
+          </button>
+        </div>
+      </div>
+
+      <!-- LISTA DE ÍTEMS EN LA NOTA -->
+      <div id="cart-items" class="flex-1 overflow-y-auto space-y-1.5 custom-scrollbar pr-0.5">
+        <!-- Ítems dinámicos -->
+      </div>
+
+      <!-- RESUMEN Y BOTÓN COBRAR -->
+      <div class="bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 mt-2 space-y-1.5 shrink-0 shadow-sm">
+        <div class="flex justify-between text-slate-900 font-extrabold text-base">
+          <span>TOTAL</span>
+          <span id="total-val">$0.00</span>
+        </div>
+
+        <div class="flex space-x-2 pt-1">
+          <button onclick="deleteCurrentOrder()" class="p-2.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl transition-all" title="Eliminar Nota">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+          <button 
+            onclick="openCheckoutModal()" 
+            id="checkout-btn"
+            disabled
+            class="flex-1 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-1.5 shadow-sm"
+          >
+            <i data-lucide="credit-card" class="w-4 h-4"></i>
+            <span>Cobrar venta</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- MODAL COBRO CON CAMPO DE REFERENCIA Y FOTO DE TICKET -->
+  <div id="checkout-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl border border-slate-100 my-auto">
+      
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-sm text-slate-900">Cerrar y Cobrar Nota</h3>
+        <button onclick="closeCheckoutModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Resumen Total -->
+      <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-4 text-center">
+        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Total a Cobrar</span>
+        <span id="modal-total-pay" class="text-2xl font-extrabold text-slate-900 block mt-0.5">$0.00</span>
+      </div>
+
+      <!-- Selección Método de Pago -->
+      <div class="mb-4">
+        <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase">Método de Pago</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button onclick="setPaymentMethod('efectivo')" id="pay-efectivo" class="py-2 rounded-xl border-2 border-slate-900 bg-slate-900 text-white font-bold text-[11px] transition-all">
+            Efectivo
+          </button>
+          <button onclick="setPaymentMethod('tarjeta')" id="pay-tarjeta" class="py-2 rounded-xl border-2 border-slate-200 text-slate-700 font-bold text-[11px] transition-all">
+            Tarjeta
+          </button>
+          <button onclick="setPaymentMethod('transferencia')" id="pay-transferencia" class="py-2 rounded-xl border-2 border-slate-200 text-slate-700 font-bold text-[11px] transition-all">
+            Transf.
+          </button>
+        </div>
+      </div>
+
+      <!-- Campo Dinámico según método de pago -->
+      <!-- EFECTIVO -->
+      <div id="cash-section" class="mb-4 space-y-2">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Monto Recibido</label>
+          <input 
+            type="number" 
+            id="amount-received" 
+            oninput="calculateChange()" 
+            placeholder="$0.00" 
+            class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-900 text-sm focus:outline-none focus:ring-1 focus:ring-slate-900"
+          >
+        </div>
+        <div class="flex justify-between items-center text-xs font-semibold pt-0.5">
+          <span class="text-slate-500">Cambio:</span>
+          <span id="change-val" class="font-bold text-slate-900">$0.00</span>
+        </div>
+      </div>
+
+      <!-- TARJETA / TRANSFERENCIA (REFERENCIA Y FOTO) -->
+      <div id="ref-section" class="mb-4 space-y-2.5 hidden">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Nº de Referencia / Autorización</label>
+          <input 
+            type="text" 
+            id="payment-reference" 
+            placeholder="Ej. REF-839201" 
+            class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl font-semibold text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
+          >
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Comprobante / Foto Voucher</label>
+          <input 
+            type="file" 
+            id="proof-photo" 
+            accept="image/*" 
+            onchange="previewPhoto(event)" 
+            class="hidden"
+          >
+          <label 
+            for="proof-photo" 
+            class="w-full border-2 border-dashed border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer hover:border-slate-400 bg-slate-50 transition-all"
+          >
+            <div id="photo-placeholder" class="flex flex-col items-center text-slate-400">
+              <i data-lucide="camera" class="w-5 h-5 mb-1"></i>
+              <span class="text-[10px] font-semibold">Adjuntar / Tomar Foto</span>
+            </div>
+            <img id="photo-preview" class="max-h-24 rounded-lg hidden shadow-sm border border-slate-200" />
+          </label>
+        </div>
+      </div>
+
+      <button 
+        onclick="processPayment()" 
+        class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center space-x-1.5"
+      >
+        <i data-lucide="check-circle" class="w-4 h-4"></i>
+        <span>Finalizar y Ticket</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- MODAL CREAR NUEVA NOTA -->
+  <div id="new-order-modal" class="fixed inset-0 bg-slate-900/45 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[60]">
+    <div class="bg-white shadow-2xl border border-slate-200 p-5 sm:p-6">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <p class="text-[9px] uppercase tracking-[.14em] font-extrabold text-slate-400">Nueva nota</p>
+          <h3 class="text-lg font-extrabold text-slate-900 mt-1">Crear una nota</h3>
+          <p class="text-[10px] text-slate-400 mt-1">Elige un nombre y un color para identificarla.</p>
+        </div>
+        <button onclick="closeNewOrderModal()" class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <label class="block text-[9px] uppercase tracking-wider font-extrabold text-slate-400 mb-2">Nombre de la nota</label>
+      <input id="new-order-name-input" type="text" maxlength="32" placeholder="Ej. Mesa 4, Juan, Pedido 12..." class="w-full min-h-[48px] px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400">
+
+      <div class="mt-5">
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-[9px] uppercase tracking-wider font-extrabold text-slate-400">Color de la nota</label>
+          <span id="new-order-color-label" class="text-[9px] font-bold text-slate-500">Azul</span>
+        </div>
+        <div id="new-order-color-options" class="grid grid-cols-6 gap-2">
+          <button type="button" class="note-color-option selected" data-color="#2563eb" data-label="Azul" onclick="selectNewOrderColor(this)"><span class="note-color-dot" style="background:#2563eb"></span></button>
+          <button type="button" class="note-color-option" data-color="#16a34a" data-label="Verde" onclick="selectNewOrderColor(this)"><span class="note-color-dot" style="background:#16a34a"></span></button>
+          <button type="button" class="note-color-option" data-color="#f59e0b" data-label="Ámbar" onclick="selectNewOrderColor(this)"><span class="note-color-dot" style="background:#f59e0b"></span></button>
+          <button type="button" class="note-color-option" data-color="#ef4444" data-label="Rojo" onclick="selectNewOrderColor(this)"><span class="note-color-dot" style="background:#ef4444"></span></button>
+          <button type="button" class="note-color-option" data-color="#8b5cf6" data-label="Violeta" onclick="selectNewOrderColor(this)"><span class="note-color-dot" style="background:#8b5cf6"></span></button>
+          <button type="button" class="note-color-option" data-color="#0891b2" data-label="Cian" onclick="selectNewOrderColor(this)"><span class="note-color-dot" style="background:#0891b2"></span></button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mt-6">
+        <button onclick="closeNewOrderModal()" class="min-h-[46px] rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-extrabold">Cancelar</button>
+        <button onclick="confirmCreateNewOrder()" class="min-h-[46px] rounded-xl bg-slate-900 text-white text-xs font-extrabold flex items-center justify-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i>Crear nota</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MENÚ PRINCIPAL -->
+  <div id="app-menu-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="font-extrabold text-sm text-slate-900">Menú del punto de venta</h3>
+          <p class="text-[10px] text-slate-400 mt-0.5">Administra y personaliza tu PDV.</p>
+        </div>
+        <button onclick="closeAppMenu()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="closeAppMenu(); openSettingsModal()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-all">
+          <i data-lucide="settings" class="w-5 h-5 mb-2 text-slate-700"></i>
+          <span class="block text-xs font-extrabold text-slate-900">Configuración</span>
+          <span class="block text-[9px] text-slate-400 mt-0.5">Personaliza el PDV</span>
+        </button>
+        <button onclick="closeAppMenu(); openPriceModal()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-all">
+          <i data-lucide="badge-dollar-sign" class="w-5 h-5 mb-2 text-blue-600"></i>
+          <span class="block text-xs font-extrabold text-slate-900">Productos</span>
+          <span class="block text-[9px] text-slate-400 mt-0.5">Precios, stock y estado</span>
+        </button>
+        <button onclick="closeAppMenu(); openDailyCutModal()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-all">
+          <i data-lucide="clipboard-list" class="w-5 h-5 mb-2 text-emerald-600"></i>
+          <span class="block text-xs font-extrabold text-slate-900">Corte del día</span>
+          <span class="block text-[9px] text-slate-400 mt-0.5">Ventas y totales</span>
+        </button>
+        <button onclick="closeAppMenu(); openSalesHistoryModal()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-all">
+          <i data-lucide="history" class="w-5 h-5 mb-2 text-amber-600"></i>
+          <span class="block text-xs font-extrabold text-slate-900">Historial</span>
+          <span class="block text-[9px] text-slate-400 mt-0.5">Ventas de hoy</span>
+        </button>
+        <button onclick="closeAppMenu(); openDashboardModal()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-all">
+          <i data-lucide="chart-no-axes-combined" class="w-5 h-5 mb-2 text-cyan-600"></i>
+          <span class="block text-xs font-extrabold text-slate-900">Resumen</span>
+          <span class="block text-[9px] text-slate-400 mt-0.5">Ventas y productos</span>
+        </button>
+        <button onclick="closeAppMenu(); openBackupModal()" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-all">
+          <i data-lucide="database-backup" class="w-5 h-5 mb-2 text-violet-600"></i>
+          <span class="block text-xs font-extrabold text-slate-900">Datos y respaldos</span>
+          <span class="block text-[9px] text-slate-400 mt-0.5">Respaldar y limpiar datos</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIGURACIÓN DEL PUNTO DE VENTA -->
+  <div id="settings-modal" class="fixed inset-0 bg-slate-950/55 backdrop-blur-md hidden z-50 overflow-y-auto">
+    <div class="settings-panel mx-auto w-full max-w-2xl min-h-full sm:min-h-0 sm:my-6 sm:rounded-[28px] bg-white shadow-2xl overflow-hidden">
+      <div class="settings-hero px-4 py-4 sm:px-6 sm:py-5">
+        <div class="flex items-center justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><div class="settings-icon w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"><i data-lucide="settings-2" class="w-5 h-5"></i></div><div class="min-w-0"><h3 class="text-base sm:text-lg font-extrabold text-slate-900">Configuración del punto de venta</h3><p class="text-[10px] sm:text-xs text-slate-500 mt-0.5">Personaliza la apariencia, negocio y ticket desde un solo lugar.</p></div></div><button onclick="closeSettingsModal()" class="settings-close w-10 h-10 rounded-xl flex items-center justify-center shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+      </div>
+      <div class="p-3 sm:p-5 space-y-3 sm:space-y-4 max-h-[calc(100dvh-150px)] sm:max-h-[72vh] overflow-y-auto custom-scrollbar">
+        <section class="settings-card"><div class="settings-section-title"><div class="settings-section-icon"><i data-lucide="store" class="w-4 h-4"></i></div><div><h4>Identidad del negocio</h4><p>Lo que verá el cajero y aparecerá en el ticket.</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4"><div class="sm:col-span-2"><label>Nombre del negocio</label><input id="setting-business-name" type="text" placeholder="Ej. Mariscos El Sabor"></div><div><label>Subtítulo</label><input id="setting-business-subtitle" type="text" placeholder="Punto de Venta"></div><div><label>Teléfono</label><input id="setting-business-phone" type="text" placeholder="646 000 0000"></div><div class="sm:col-span-2"><label>Dirección</label><input id="setting-business-address" type="text" placeholder="Dirección del negocio"></div></div></section>
+        <section class="settings-card"><div class="settings-section-title"><div class="settings-section-icon"><i data-lucide="receipt" class="w-4 h-4"></i></div><div><h4>Ticket de venta</h4><p>Personaliza el encabezado y mensaje final.</p></div></div><div class="space-y-3 mt-4"><div><label>Título del ticket</label><input id="setting-ticket-title" type="text" placeholder="TACOS DE MARISCOS"></div><div><label>Mensaje al final</label><input id="setting-ticket-footer" type="text" placeholder="¡Gracias por su preferencia!"></div></div></section>
+        <section class="settings-card"><div class="settings-section-title"><div class="settings-section-icon"><i data-lucide="shopping-bag" class="w-4 h-4"></i></div><div><h4>Ventas</h4><p>Define cómo se muestran los importes.</p></div></div><div class="mt-4"><label>Moneda</label><select id="setting-currency"><option value="$">Peso / $</option><option value="MXN">MXN</option><option value="USD">USD</option></select></div><div class="settings-info mt-3"><i data-lucide="badge-check" class="w-4 h-4 shrink-0"></i><span>Los precios se manejan como precios finales. No se agrega IVA.</span></div></section>
+        <section class="settings-card"><div class="settings-section-title"><div class="settings-section-icon"><i data-lucide="palette" class="w-4 h-4"></i></div><div><h4>Apariencia</h4><p>Ajusta el catálogo para trabajar cómodamente.</p></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4"><div><label>Color principal</label><div class="settings-color-row"><input id="setting-accent" type="color"><span>Botones y elementos destacados</span></div></div><div><label>Densidad del catálogo</label><select id="setting-density"><option value="compact">Compacto</option><option value="normal">Normal</option><option value="comfortable">Cómodo</option></select></div></div><label class="settings-toggle mt-3"><input id="setting-show-category" type="checkbox"><span class="settings-toggle-box"><i data-lucide="check" class="w-3.5 h-3.5"></i></span><span><b>Mostrar categoría en productos</b><small>Ocúltala para tener tarjetas más limpias.</small></span></label></section>
+      </div>
+      <div class="settings-actions px-3 py-3 sm:px-5 sm:py-4 flex flex-col-reverse sm:flex-row gap-2"><button onclick="resetSettings()" class="settings-secondary w-full sm:w-auto">Restablecer</button><button onclick="saveSettings()" class="settings-primary flex-1"><i data-lucide="save" class="w-4 h-4"></i><span>Guardar configuración</span></button></div>
+    </div>
+  </div>
+
+  <!-- MODAL PRODUCTOS / INVENTARIO -->
+  <div id="price-modal" class="fixed inset-0 bg-slate-950/55 backdrop-blur-md hidden flex items-end sm:items-center justify-center z-50 overflow-hidden">
+    <div class="products-panel bg-white w-full max-w-5xl max-h-[96dvh] sm:max-h-[92vh] sm:rounded-[28px] rounded-t-[28px] shadow-2xl overflow-hidden flex flex-col">
+      <div class="products-hero px-4 py-4 sm:px-6 sm:py-5 shrink-0"><div class="flex items-center justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><div class="products-icon w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"><i data-lucide="boxes" class="w-5 h-5"></i></div><div class="min-w-0"><h3 class="text-base sm:text-lg font-extrabold text-slate-900">Productos</h3><p class="text-[10px] sm:text-xs text-slate-500 mt-0.5">Precios, existencia y disponibilidad.</p></div></div><button onclick="closePriceModal()" class="products-close w-10 h-10 rounded-xl flex items-center justify-center shrink-0"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4"><div class="product-stat"><span>Productos</span><b id="inventory-count">0</b></div><div class="product-stat stat-blue"><span>Tacos</span><b id="inventory-tacos">0</b></div><div class="product-stat stat-green"><span>Bebidas</span><b id="inventory-drinks">0</b></div><div class="product-stat stat-amber"><span>Precio promedio</span><b id="inventory-average">$0.00</b></div></div>
+        <div class="flex flex-col sm:flex-row gap-2 mt-3"><div class="relative flex-1"><i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i><input id="inventory-search" oninput="renderPriceList()" type="text" placeholder="Buscar producto..." class="products-search w-full pl-9 pr-3"></div><select id="inventory-filter" onchange="renderPriceList()" class="products-filter px-3 py-2.5 font-bold text-xs"><option value="todos">Todas</option><option value="tacos">Tacos</option><option value="bebidas">Bebidas</option><option value="otros">Otros</option></select><button onclick="openAddProductModal()" class="products-add"><i data-lucide="plus" class="w-4 h-4"></i><span>Nuevo producto</span></button></div>
+      </div>
+      <div class="flex-1 overflow-auto custom-scrollbar px-3 py-3 sm:px-5 sm:py-4 bg-slate-50"><div id="price-list" class="products-list"></div></div>
+      <div class="products-footer p-3 sm:px-5 sm:py-4 shrink-0 flex flex-col sm:flex-row gap-2"><button onclick="resetProductPrices()" class="products-secondary">Restablecer precios</button><button onclick="saveProductChanges()" class="products-save"><i data-lucide="save" class="w-4 h-4"></i><span>Guardar cambios</span></button></div>
+    </div>
+  </div>
+
+  <!-- MODAL NUEVO PRODUCTO -->
+  <div id="add-product-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[60]">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="font-extrabold text-base text-slate-900">Nuevo producto</h3>
+          <p class="text-[10px] text-slate-400 mt-0.5">Añade un producto al catálogo y define su precio.</p>
+        </div>
+        <button onclick="closeAddProductModal()" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Nombre del producto</label>
+          <input id="new-product-name" type="text" placeholder="Ej. Taco de Pulpo" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-slate-900">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">Precio de venta</label>
+            <input id="new-product-price" type="number" min="0" step="0.01" placeholder="0.00" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-slate-900">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1">Categoría</label>
+            <select id="new-product-category" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-slate-900">
+              <option value="tacos">Tacos</option>
+              <option value="bebidas">Bebidas</option>
+              <option value="otros">Otros</option>
+            </select>
+          </div>
+        </div>
+        <label class="flex items-center gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer">
+          <input id="new-product-track-stock" type="checkbox" class="w-4 h-4" onchange="toggleNewProductStock()">
+          <span class="text-xs font-bold text-slate-800">Controlar existencia</span>
+        </label>
+        <div id="new-product-stock-wrap" class="hidden">
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Existencia inicial</label>
+          <input id="new-product-stock" type="number" min="0" step="1" value="0" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-extrabold focus:outline-none focus:ring-2 focus:ring-slate-900">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mt-5">
+        <button onclick="closeAddProductModal()" class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cancelar</button>
+        <button onclick="addNewProduct()" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"><i data-lucide="plus" class="w-4 h-4"></i> Añadir producto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CORTE DEL DÍA -->
+  <div id="daily-cut-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100 my-auto">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="font-extrabold text-sm text-slate-900">Corte del Día</h3>
+          <p id="daily-cut-date" class="text-[10px] text-slate-400 mt-0.5"></p>
+        </div>
+        <button onclick="closeDailyCutModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <span class="text-[9px] text-slate-500 font-bold uppercase block">Ventas</span>
+          <span id="cut-sales-count" class="text-xl font-extrabold text-slate-900">0</span>
+        </div>
+        <div class="bg-slate-900 rounded-xl p-3 text-white">
+          <span class="text-[9px] text-slate-300 font-bold uppercase block">Total de venta</span>
+          <span id="cut-total" class="text-xl font-extrabold">$0.00</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 mb-3">
+        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-2.5">
+          <span class="text-[9px] text-emerald-600 font-bold uppercase block">Efectivo</span>
+          <span id="cut-cash" class="text-sm font-extrabold text-emerald-700">$0.00</span>
+        </div>
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-2.5">
+          <span class="text-[9px] text-blue-600 font-bold uppercase block">Tarjeta</span>
+          <span id="cut-card" class="text-sm font-extrabold text-blue-700">$0.00</span>
+        </div>
+        <div class="bg-violet-50 border border-violet-100 rounded-xl p-2.5">
+          <span class="text-[9px] text-violet-600 font-bold uppercase block">Transferencia</span>
+          <span id="cut-transfer" class="text-sm font-extrabold text-violet-700">$0.00</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4">
+        <div class="flex justify-between text-xs">
+          <span class="text-slate-500">Primera venta</span>
+          <span id="cut-first-sale" class="font-semibold text-slate-700">—</span>
+        </div>
+        <div class="flex justify-between text-xs mt-1.5">
+          <span class="text-slate-500">Última venta</span>
+          <span id="cut-last-sale" class="font-semibold text-slate-700">—</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="generateDailySalesPDF()" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5">
+          <i data-lucide="file-down" class="w-4 h-4"></i>
+          <span>PDF</span>
+        </button>
+        <button onclick="printDailyCut()" class="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Imprimir</span>
+        </button>
+        <button onclick="confirmNewDay()" class="py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-xl transition-all flex items-center justify-center space-x-1.5">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span>Cerrar Día</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL HISTORIAL DE VENTAS -->
+  <div id="sales-history-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl sm:rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 my-auto max-h-[94vh] overflow-hidden flex flex-col">
+      <div class="p-4 sm:p-5 border-b border-slate-200 flex justify-between items-start">
+        <div><h3 class="font-extrabold text-sm text-slate-900">Historial de ventas</h3><p id="history-summary" class="text-[10px] text-slate-400 mt-0.5"></p></div>
+        <button onclick="closeSalesHistoryModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="p-3 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-[1fr_130px_140px] gap-2"><input id="history-search" oninput="renderSalesHistory()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-slate-900" placeholder="Buscar venta, nota o producto..."><select id="history-period" onchange="renderSalesHistory()" class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"><option value="all">Todas</option><option value="today">Hoy</option></select><select id="history-payment" onchange="renderSalesHistory()" class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"><option value="all">Todos los pagos</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option></select></div>
+      <div id="sales-history-list" class="p-3 space-y-2 overflow-y-auto custom-scrollbar flex-1"></div>
+      <div class="p-3 border-t border-slate-200"><button onclick="closeSalesHistoryModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cerrar</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL RESUMEN -->
+  <div id="dashboard-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+    <div class="bg-white rounded-2xl sm:rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 my-auto max-h-[94vh] overflow-y-auto custom-scrollbar p-4 sm:p-5">
+      <div class="flex justify-between items-start mb-4"><div><h3 class="font-extrabold text-sm text-slate-900">Resumen de ventas</h3><p class="text-[10px] text-slate-400 mt-0.5">Información del día actual</p></div><button onclick="closeDashboardModal()" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3"><span class="text-[9px] text-slate-500 font-bold uppercase">Ventas</span><strong id="dash-count" class="block text-lg font-extrabold">0</strong></div>
+        <div class="bg-slate-900 text-white rounded-xl p-3"><span class="text-[9px] text-slate-300 font-bold uppercase">Total</span><strong id="dash-total" class="block text-lg font-extrabold">$0.00</strong></div>
+        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3"><span class="text-[9px] text-emerald-600 font-bold uppercase">Efectivo</span><strong id="dash-cash" class="block text-lg font-extrabold text-emerald-700">$0.00</strong></div>
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-3"><span class="text-[9px] text-blue-600 font-bold uppercase">Digital</span><strong id="dash-digital" class="block text-lg font-extrabold text-blue-700">$0.00</strong></div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+        <div class="bg-white border border-slate-200 rounded-xl p-3"><h4 class="text-xs font-extrabold mb-2">Métodos de pago</h4><div class="space-y-2 text-xs"><div class="flex justify-between"><span>Efectivo</span><b id="dash-pay-cash">$0.00</b></div><div class="flex justify-between"><span>Tarjeta</span><b id="dash-pay-card">$0.00</b></div><div class="flex justify-between"><span>Transferencia</span><b id="dash-pay-transfer">$0.00</b></div></div></div>
+        <div class="bg-white border border-slate-200 rounded-xl p-3"><h4 class="text-xs font-extrabold mb-2">Productos más vendidos</h4><div id="dash-top-products" class="space-y-1.5 text-xs"></div></div>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mt-3"><div class="flex justify-between text-xs"><span>Promedio por venta</span><b id="dash-average">$0.00</b></div><div class="flex justify-between text-xs mt-1.5"><span>Primera venta</span><b id="dash-first">—</b></div><div class="flex justify-between text-xs mt-1.5"><span>Última venta</span><b id="dash-last">—</b></div></div>
+      <button onclick="closeDashboardModal()" class="w-full mt-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- MODAL RESPALDO -->
+  <div id="backup-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-100">
+      <div class="flex justify-between items-center mb-4"><div><h3 class="font-extrabold text-sm">Respaldo de datos</h3><p class="text-[10px] text-slate-400 mt-0.5">Guarda tus ventas y configuración.</p></div><button onclick="closeBackupModal()" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+      <div id="data-stats" class="grid grid-cols-2 gap-2 mb-3"></div>
+      <div class="space-y-2">
+        <button onclick="exportBackup()" class="w-full p-3 bg-slate-900 text-white rounded-xl text-left"><b class="block text-xs">Exportar respaldo</b><span class="text-[9px] text-slate-300">Descarga productos, ventas, notas y configuración.</span></button>
+        <label class="block p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer"><b class="block text-xs">Restaurar respaldo</b><span class="block text-[9px] text-slate-400 mb-2">Selecciona un archivo JSON generado por este PDV.</span><input id="backup-file" type="file" accept="application/json,.json" onchange="importBackup(event)" class="w-full text-[10px]"></label>
+      </div>
+      <div class="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl">
+        <b class="block text-xs text-red-700">Zona de mantenimiento</b>
+        <span class="block text-[9px] text-red-500 mt-0.5 mb-2">Estas acciones no se pueden deshacer sin un respaldo.</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button onclick="clearOpenOrdersData()" class="py-2 bg-white border border-red-200 text-red-600 font-bold text-[10px] rounded-lg">Borrar notas abiertas</button>
+          <button onclick="clearSalesHistory()" class="py-2 bg-white border border-red-200 text-red-600 font-bold text-[10px] rounded-lg">Borrar historial</button>
+        </div>
+      </div>
+      <button onclick="closeBackupModal()" class="w-full mt-3 py-2.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- IMPRESIÓN DEL CORTE DEL DÍA -->
+  <div id="printable-daily-cut" class="hidden">
+    <div class="text-center font-mono text-xs">
+      <h2 class="text-lg font-bold">CORTE DEL DÍA</h2>
+      <p id="cut-ticket-business" class="text-[10px]">TACOS DE MARISCOS</p>
+      <p class="text-[10px] mt-1" id="cut-ticket-date"></p>
+      <p class="my-1">--------------------------------</p>
+      <p id="cut-ticket-sales" class="text-left"></p>
+      <div id="cut-ticket-payment-summary" class="text-left mt-2 space-y-0.5 text-[10px]"></div>
+      <div id="cut-ticket-sales-list" class="text-left mt-2 space-y-1"></div>
+      <p class="my-1">--------------------------------</p>
+      <p id="cut-ticket-total" class="text-right font-bold text-sm"></p>
+      <p class="my-2">--------------------------------</p>
+      <p class="font-bold">Fin del corte</p>
+    </div>
+  </div>
+
+  <!-- IMPRESIÓN DE TICKET DE COMPRA -->
+  <div id="printable-ticket" class="hidden">
+    <div class="text-center font-mono text-xs">
+      <h2 id="ticket-business-name" class="text-lg font-bold">TACOS DE MARISCOS</h2>
+      <p id="ticket-business-subtitle" class="text-[10px]">Punto de Venta Móvil</p>
+      <p id="ticket-business-phone" class="text-[10px] hidden"></p>
+      <p id="ticket-business-address" class="text-[10px] hidden"></p>
+      <p class="text-[10px] mt-1" id="ticket-date"></p>
+      <p class="text-[10px] font-bold" id="ticket-order-name"></p>
+      <p class="text-[10px]" id="ticket-type"></p>
+      <p class="my-1">--------------------------------</p>
+      <div id="ticket-items" class="text-left space-y-1"></div>
+      <p class="my-1">--------------------------------</p>
+      <div class="text-right font-bold space-y-0.5">
+        <p id="ticket-total" class="text-sm"></p>
+      </div>
+      <div id="ticket-ref-info" class="text-left text-[10px] mt-2 space-y-0.5 hidden">
+        <p class="my-1">--------------------------------</p>
+        <p id="ticket-ref-val"></p>
+      </div>
+      <p class="my-2">--------------------------------</p>
+      <p id="ticket-footer" class="font-bold">¡Gracias por su preferencia!</p>
+    </div>
+  </div>
+
+  <!-- NOTIFICACIÓN TOAST -->
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3.5 py-2 rounded-xl shadow-2xl text-xs font-semibold flex items-center space-x-2 transition-all opacity-0 pointer-events-none z-50">
+    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+    <span id="toast-message">Notificación</span>
+  </div>
+
+  <!-- JAVASCRIPT LÓGICA PDV -->
+  <script>
+    // 1. PRODUCTOS DEL MENÚ
+    const PRODUCTS = [
+      { id: 1, name: "Taco de Pescado", category: "tacos", price: 35.00, icon: "fish", stock: null, available: true },
+      { id: 2, name: "Taco de Camarón", category: "tacos", price: 40.00, icon: "utensils", stock: null, available: true },
+      { id: 3, name: "Taco a la Plancha", category: "tacos", price: 42.00, icon: "flame", stock: null, available: true },
+      { id: 4, name: "Coca Cola", category: "bebidas", price: 30.00, icon: "cup-soda", stock: null, available: true },
+      { id: 5, name: "Agua de Jamaica", category: "bebidas", price: 25.00, icon: "glass-water", stock: null, available: true },
+      { id: 6, name: "Fresca", category: "bebidas", price: 30.00, icon: "cup-soda", stock: null, available: true }
+    ];
+
+    // PRECIOS PERSONALIZADOS
+    const DEFAULT_PRICES = {};
+    PRODUCTS.forEach(product => DEFAULT_PRICES[product.id] = product.price);
+
+    function loadProductsData() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PRODUCTS_DATA_KEY) || 'null');
+        if (!Array.isArray(saved)) return;
+
+        const savedIds = new Set(saved.map(product => Number(product.id)));
+
+        // Los productos guardados representan el catálogo vigente.
+        // Si un producto base ya no está guardado, se considera eliminado.
+        for (let i = PRODUCTS.length - 1; i >= 0; i--) {
+          if (!savedIds.has(Number(PRODUCTS[i].id))) {
+            PRODUCTS.splice(i, 1);
+          }
+        }
+
+        saved.forEach(savedProduct => {
+          const existing = PRODUCTS.find(product => product.id === Number(savedProduct.id));
+          if (existing) {
+            existing.name = savedProduct.name || existing.name;
+            existing.category = savedProduct.category || existing.category;
+            existing.price = Number(savedProduct.price) >= 0 ? Number(savedProduct.price) : existing.price;
+            existing.icon = savedProduct.icon || existing.icon;
+            existing.stock = savedProduct.stock === null || savedProduct.stock === undefined || Number.isFinite(Number(savedProduct.stock)) ? (savedProduct.stock === null || savedProduct.stock === undefined ? null : Math.max(0, Number(savedProduct.stock))) : null;
+            existing.available = savedProduct.available !== false;
+          } else if (savedProduct.name) {
+            PRODUCTS.push({
+              id: Number(savedProduct.id),
+              name: savedProduct.name,
+              category: savedProduct.category || 'otros',
+              price: Number(savedProduct.price) >= 0 ? Number(savedProduct.price) : 0,
+              icon: savedProduct.icon || 'package',
+              stock: savedProduct.stock === null || savedProduct.stock === undefined ? null : Math.max(0, Number(savedProduct.stock) || 0),
+              available: savedProduct.available !== false
+            });
+          }
+        });
+      } catch (error) {
+        console.warn('No se pudieron cargar los productos guardados.');
+      }
+    }
+
+    function saveProductsData() {
+      const data = PRODUCTS.map(product => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        icon: product.icon,
+        stock: product.stock === null || product.stock === undefined ? null : Number(product.stock),
+        available: product.available !== false
+      }));
+      localStorage.setItem(PRODUCTS_DATA_KEY, JSON.stringify(data));
+    }
+
+    const PRODUCT_PRICES_KEY = 'mariscos_pdv_product_prices_v1';
+    const PRODUCTS_DATA_KEY = 'mariscos_pdv_products_v1';
+    const OPEN_ORDERS_KEY = 'mariscos_pdv_open_orders_v1';
+    const ACTIVE_ORDER_KEY = 'mariscos_pdv_active_order_v1';
+
+    function loadProductPrices() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PRODUCT_PRICES_KEY) || '{}');
+        PRODUCTS.forEach(product => {
+          if (saved[product.id] !== undefined && Number(saved[product.id]) >= 0) {
+            product.price = Number(saved[product.id]);
+          }
+        });
+      } catch (error) {
+        console.warn('No se pudieron cargar los precios guardados.');
+      }
+    }
+
+    function saveProductPricesToStorage() {
+      const prices = {};
+      PRODUCTS.forEach(product => prices[product.id] = product.price);
+      localStorage.setItem(PRODUCT_PRICES_KEY, JSON.stringify(prices));
+    }
+
+    // CONFIGURACIÓN PERSONALIZABLE DEL PUNTO DE VENTA
+    const SETTINGS_KEY = 'mariscos_pdv_settings_v1';
+    const DEFAULT_SETTINGS = {
+      businessName: 'MARISCOS PDV',
+      businessSubtitle: 'Punto de Venta Móvil',
+      businessPhone: '',
+      businessAddress: '',
+      ticketTitle: 'TACOS DE MARISCOS',
+      ticketFooter: '¡Gracias por su preferencia!',
+      currency: '$',
+      accent: '#0f172a',
+      density: 'compact',
+      showCategory: true
+    };
+
+    let appSettings = loadSettings();
+
+    function loadSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        const { taxRate, ...cleanSaved } = saved || {};
+        return { ...DEFAULT_SETTINGS, ...cleanSaved };
+      } catch (error) {
+        return { ...DEFAULT_SETTINGS };
+      }
+    }
+
+    function saveSettingsToStorage() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+    }
+
+    function openAppMenu() {
+      document.getElementById('app-menu-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAppMenu() {
+      document.getElementById('app-menu-modal').classList.add('hidden');
+    }
+
+    function openSettingsModal() {
+      const s = appSettings;
+      document.getElementById('setting-business-name').value = s.businessName;
+      document.getElementById('setting-business-subtitle').value = s.businessSubtitle;
+      document.getElementById('setting-business-phone').value = s.businessPhone || '';
+      document.getElementById('setting-business-address').value = s.businessAddress || '';
+      document.getElementById('setting-ticket-title').value = s.ticketTitle;
+      document.getElementById('setting-ticket-footer').value = s.ticketFooter;
+      document.getElementById('setting-currency').value = s.currency;
+      document.getElementById('setting-accent').value = s.accent;
+      document.getElementById('setting-density').value = s.density;
+      document.getElementById('setting-show-category').checked = s.showCategory;
+      document.getElementById('settings-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function saveSettings() {
+      appSettings = {
+        businessName: document.getElementById('setting-business-name').value.trim() || DEFAULT_SETTINGS.businessName,
+        businessSubtitle: document.getElementById('setting-business-subtitle').value.trim() || DEFAULT_SETTINGS.businessSubtitle,
+        businessPhone: document.getElementById('setting-business-phone').value.trim(),
+        businessAddress: document.getElementById('setting-business-address').value.trim(),
+        ticketTitle: document.getElementById('setting-ticket-title').value.trim() || DEFAULT_SETTINGS.ticketTitle,
+        ticketFooter: document.getElementById('setting-ticket-footer').value.trim() || DEFAULT_SETTINGS.ticketFooter,
+        currency: document.getElementById('setting-currency').value,
+        accent: document.getElementById('setting-accent').value,
+        density: document.getElementById('setting-density').value,
+        showCategory: document.getElementById('setting-show-category').checked
+      };
+
+      saveSettingsToStorage();
+      applySettings();
+      closeSettingsModal();
+      showToast('¡Configuración guardada!');
+    }
+
+    function resetSettings() {
+      if (!confirm('¿Restablecer la configuración original del punto de venta?')) return;
+      appSettings = { ...DEFAULT_SETTINGS };
+      saveSettingsToStorage();
+      applySettings();
+      openSettingsModal();
+      showToast('Configuración restablecida');
+    }
+
+    function applySettings() {
+      document.title = appSettings.businessName + ' - Punto de Venta';
+
+      const headerName = document.querySelector('header h1');
+      if (headerName) headerName.innerText = appSettings.businessName;
+
+      const headerSubtitle = document.getElementById('business-subtitle-display');
+      if (headerSubtitle) headerSubtitle.innerText = appSettings.businessSubtitle;
+
+      const accentElements = [
+        document.querySelector('header .bg-slate-900'),
+        document.getElementById('checkout-btn')
+      ];
+      accentElements.forEach(el => { if (el) el.style.backgroundColor = appSettings.accent; });
+
+      document.getElementById('ticket-business-name').innerText = appSettings.ticketTitle;
+      document.getElementById('ticket-business-subtitle').innerText = appSettings.businessSubtitle;
+      document.getElementById('ticket-business-phone').innerText = appSettings.businessPhone || '';
+      document.getElementById('ticket-business-address').innerText = appSettings.businessAddress || '';
+      document.getElementById('ticket-business-phone').classList.toggle('hidden', !appSettings.businessPhone);
+      document.getElementById('ticket-business-address').classList.toggle('hidden', !appSettings.businessAddress);
+      document.getElementById('ticket-footer').innerText = appSettings.ticketFooter;
+
+      document.documentElement.style.setProperty('--pdv-accent', appSettings.accent);
+
+      const grid = document.getElementById('products-grid');
+      if (grid) {
+        grid.dataset.density = appSettings.density;
+      }
+
+      renderProducts();
+      updateCartUI();
+    }
+
+
+    function money(value) {
+      const amount = Number(value) || 0;
+      if (appSettings.currency === 'MXN' || appSettings.currency === 'USD') {
+        return `${appSettings.currency} ${amount.toFixed(2)}`;
+      }
+      return `$${amount.toFixed(2)}`;
+    }
+
+
+    // ESTADO DE MÚLTIPLES NOTAS ABIERTAS
+    let openOrders = loadOpenOrders();
+    let activeOrderId = loadActiveOrderId();
+    let orderCounter = getInitialOrderCounter();
+
+    function loadOpenOrders() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(OPEN_ORDERS_KEY) || 'null');
+        if (Array.isArray(saved) && saved.length > 0) {
+          return saved.map(order => ({
+            id: Number(order.id),
+            name: order.name || `Nota ${order.id}`,
+            color: order.color || '#2563eb',
+            serviceType: order.serviceType || 'Comer Aquí',
+            cart: Array.isArray(order.cart) ? order.cart : []
+          }));
+        }
+      } catch (error) {
+        console.warn('No se pudieron cargar las notas guardadas.');
+      }
+
+      return [
+        { id: 1, name: 'Nota 1', color: '#2563eb', serviceType: 'Comer Aquí', cart: [] }
+      ];
+    }
+
+    function loadActiveOrderId() {
+      try {
+        const saved = Number(localStorage.getItem(ACTIVE_ORDER_KEY));
+        if (Number.isFinite(saved) && openOrders.some(order => order.id === saved)) {
+          return saved;
+        }
+      } catch (error) {}
+      return openOrders[0]?.id || 1;
+    }
+
+    function getInitialOrderCounter() {
+      return openOrders.reduce((max, order) => Math.max(max, Number(order.id) || 0), 0) || 1;
+    }
+
+    function saveOpenOrders() {
+      try {
+        localStorage.setItem(OPEN_ORDERS_KEY, JSON.stringify(openOrders));
+        localStorage.setItem(ACTIVE_ORDER_KEY, String(activeOrderId));
+      } catch (error) {
+        console.warn('No se pudieron guardar las notas en localStorage.');
+      }
+    }
+
+    let activeTab = 'menu'; // 'menu' o 'cart'
+    let selectedCategory = 'todos';
+    let paymentMethod = 'efectivo';
+    let photoDataUrl = null;
+
+    // VENTAS DEL DÍA E HISTORIAL PERMANENTE
+    const DAILY_SALES_KEY = 'mariscos_pdv_daily_sales_v1';
+    const SALES_HISTORY_KEY = 'mariscos_pdv_sales_history_v1';
+    let dailySales = loadDailySales();
+    let salesHistory = loadSalesHistory();
+    if (!salesHistory.length && dailySales.length) { salesHistory = [...dailySales]; saveSalesHistory(); }
+
+    function getTodayKey() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+
+    function loadDailySales() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(DAILY_SALES_KEY) || '{}');
+        return saved.date === getTodayKey()
+          ? (saved.sales || [])
+          : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveDailySales() {
+      localStorage.setItem(DAILY_SALES_KEY, JSON.stringify({ date: getTodayKey(), sales: dailySales }));
+    }
+
+    function loadSalesHistory() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SALES_HISTORY_KEY) || '[]');
+        if(Array.isArray(saved)) return saved;
+      } catch(error) {}
+      return [];
+    }
+    function saveSalesHistory() { localStorage.setItem(SALES_HISTORY_KEY, JSON.stringify(salesHistory)); }
+
+
+    // INICIALIZACIÓN
+    document.addEventListener("DOMContentLoaded", () => {
+      loadProductsData();
+      loadProductPrices();
+      applySettings();
+      saveOpenOrders();
+      lucide.createIcons();
+      updateClock();
+      setInterval(updateClock, 1000);
+      renderOrderTabs();
+      renderProducts();
+      updateCartUI();
+    });
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('current-time').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // CAMBIO VISTAS MÓVILES (MENÚ / CARRITO)
+    function switchMainTab(tab) {
+      activeTab = tab;
+      const viewMenu = document.getElementById('view-menu');
+      const viewCart = document.getElementById('view-cart');
+      const btnMenu = document.getElementById('tab-btn-menu');
+      const btnCart = document.getElementById('tab-btn-cart');
+
+      if(tab === 'menu') {
+        viewMenu.classList.remove('hidden');
+        viewCart.classList.add('hidden');
+        btnMenu.className = "py-2.5 border-b-2 border-slate-900 text-slate-900 flex items-center justify-center space-x-1.5 transition-all";
+        btnCart.className = "py-2.5 border-b-2 border-transparent text-slate-400 flex items-center justify-center space-x-1.5 transition-all relative";
+      } else {
+        viewCart.classList.remove('hidden');
+        viewMenu.classList.add('hidden');
+        btnCart.className = "py-2.5 border-b-2 border-slate-900 text-slate-900 flex items-center justify-center space-x-1.5 transition-all relative";
+        btnMenu.className = "py-2.5 border-b-2 border-transparent text-slate-400 flex items-center justify-center space-x-1.5 transition-all";
+      }
+    }
+
+    // GESTIÓN DE MÚLTIPLES NOTAS (NOTAS ABIERTAS)
+    let newOrderSelectedColor = '#2563eb';
+
+    function openNewOrderModal() {
+      newOrderSelectedColor = '#2563eb';
+      const input = document.getElementById('new-order-name-input');
+      if (input) { input.value = ''; setTimeout(() => input.focus(), 80); }
+      document.querySelectorAll('#new-order-color-options .note-color-option').forEach(btn => btn.classList.toggle('selected', btn.dataset.color === newOrderSelectedColor));
+      const label = document.getElementById('new-order-color-label');
+      if (label) label.textContent = 'Azul';
+      document.getElementById('new-order-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeNewOrderModal() {
+      document.getElementById('new-order-modal').classList.add('hidden');
+    }
+
+    function selectNewOrderColor(button) {
+      newOrderSelectedColor = button.dataset.color || '#2563eb';
+      document.querySelectorAll('#new-order-color-options .note-color-option').forEach(btn => btn.classList.toggle('selected', btn === button));
+      const label = document.getElementById('new-order-color-label');
+      if (label) label.textContent = button.dataset.label || 'Color';
+    }
+
+    function createNewOrder(name = '', color = '#2563eb') {
+      orderCounter++;
+      const newOrder = {
+        id: orderCounter,
+        name: name || `Nota ${orderCounter}`,
+        color: color || '#2563eb',
+        serviceType: 'Comer Aquí',
+        cart: []
+      };
+      openOrders.push(newOrder);
+      activeOrderId = newOrder.id;
+      saveOpenOrders();
+      renderOrderTabs();
+      updateCartUI();
+      showToast(`Creada: ${newOrder.name}`);
+    }
+
+    function confirmCreateNewOrder() {
+      const input = document.getElementById('new-order-name-input');
+      const name = (input?.value || '').trim() || `Nota ${orderCounter + 1}`;
+      createNewOrder(name, newOrderSelectedColor);
+      closeNewOrderModal();
+      switchMainTab('cart');
+    }
+
+    function switchOrder(orderId) {
+      activeOrderId = orderId;
+      saveOpenOrders();
+      renderOrderTabs();
+      updateCartUI();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[char]));
+    }
+
+    function getContrastText(hex) {
+      const value = String(hex || '#2563eb').replace('#','');
+      const r = parseInt(value.substring(0,2),16) || 37;
+      const g = parseInt(value.substring(2,4),16) || 99;
+      const b = parseInt(value.substring(4,6),16) || 235;
+      const luminance = (r * 299 + g * 587 + b * 114) / 1000;
+      return luminance > 165 ? '#0f172a' : '#ffffff';
+    }
+
+    function renderOrderTabs() {
+      const container = document.getElementById('orders-tabs');
+      container.innerHTML = openOrders.map(order => {
+        const isActive = order.id === activeOrderId;
+        const totalItems = order.cart.reduce((acc, i) => acc + i.quantity, 0);
+        const color = order.color || '#2563eb';
+        const textColor = getContrastText(color);
+        const style = isActive
+          ? `background:${color};color:${textColor};border-color:${color};`
+          : `background:#fff;color:#334155;border-color:#e2e8f0;`;
+        const badgeStyle = isActive
+          ? `background:rgba(255,255,255,.82);color:#0f172a;`
+          : `background:${color};color:${textColor};`;
+
+        return `
+          <button onclick="switchOrder(${order.id})" class="note-tab px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center space-x-1.5 shrink-0 border shadow-sm" style="${style}" title="${escapeHtml(order.name)}">
+            <span class="w-2.5 h-2.5 rounded-full shrink-0 border border-white/70" style="background:${color}"></span>
+            <span class="note-tab-name">${escapeHtml(order.name)}</span>
+            ${totalItems > 0 ? `<span class="px-1.5 py-0.5 text-[9px] rounded-full font-extrabold" style="${badgeStyle}">${totalItems}</span>` : ''}
+          </button>`;
+      }).join('');
+    }
+
+    function getActiveOrder() {
+      return openOrders.find(o => o.id === activeOrderId) || openOrders[0];
+    }
+
+    function updateOrderName(name) {
+      const order = getActiveOrder();
+      order.name = name || `Nota ${order.id}`;
+      saveOpenOrders();
+      renderOrderTabs();
+    }
+
+    function setServiceType(type) {
+      const order = getActiveOrder();
+      order.serviceType = type;
+      saveOpenOrders();
+      updateCartUI();
+    }
+
+    function deleteCurrentOrder() {
+      if(openOrders.length <= 1) {
+        // Limpiar contenido si es la única nota
+        const order = getActiveOrder();
+        order.cart = [];
+        order.name = `Nota 1`;
+        saveOpenOrders();
+        updateCartUI();
+        renderOrderTabs();
+        showToast("Nota limpiada");
+        return;
+      }
+
+      openOrders = openOrders.filter(o => o.id !== activeOrderId);
+      activeOrderId = openOrders[0].id;
+      saveOpenOrders();
+      renderOrderTabs();
+      updateCartUI();
+      showToast("Nota eliminada");
+    }
+
+    // CATÁLOGO
+    function filterCategory(cat) {
+      selectedCategory = cat;
+      ['todos', 'tacos', 'bebidas', 'otros'].forEach(c => {
+        const btn = document.getElementById(`cat-${c}`);
+        if(c === cat) {
+          btn.className = "flex-1 py-1 rounded-lg bg-slate-900 text-white font-semibold text-[11px] transition-all";
+        } else {
+          btn.className = "flex-1 py-1 rounded-lg text-slate-600 font-semibold text-[11px] hover:bg-slate-50 transition-all";
+        }
+      });
+      renderProducts();
+    }
+
+    function filterProducts() {
+      renderProducts();
+    }
+
+    function renderProducts() {
+      const grid = document.getElementById('products-grid');
+      const query = (document.getElementById('search-input')?.value || '').toLowerCase();
+
+      const filtered = PRODUCTS.filter(p => {
+        const matchesCat = selectedCategory === 'todos' || p.category === selectedCategory;
+        const matchesSearch = p.name.toLowerCase().includes(query);
+        return matchesCat && matchesSearch;
+      });
+
+      if(filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400"><i data-lucide="search-x" class="w-8 h-8 mx-auto mb-1 opacity-50"></i><p class="text-xs font-medium">Sin resultados</p></div>`;
+        lucide.createIcons();
+        return;
+      }
+
+      grid.innerHTML = filtered.map(product => {
+        const isOut = product.available === false || (product.stock !== null && Number(product.stock) <= 0);
+        const stockText = product.stock === null || product.stock === undefined ? '' : `Stock: ${Number(product.stock)}`;
+        return `
+        <div onclick="handleProductClick(${product.id})" class="bg-white p-2 rounded-xl border border-slate-200 ${isOut ? 'opacity-55 cursor-not-allowed' : 'hover:border-slate-900 active:scale-95 cursor-pointer'} transition-all flex flex-col justify-between ${appSettings.density === 'comfortable' ? 'h-36' : appSettings.density === 'normal' ? 'h-32' : 'h-28'} shadow-sm">
+          <div class="flex items-center justify-between gap-2">
+            <div class="w-6 h-6 rounded-md bg-slate-100 flex items-center justify-center text-slate-700"><i data-lucide="${product.icon || 'package'}" class="w-4 h-4"></i></div>
+            ${appSettings.showCategory ? `<span class="text-[9px] font-bold uppercase text-slate-400 truncate">${product.category}</span>` : ''}
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-[11px] leading-tight">${product.name}</h3>
+            <div class="flex items-center justify-between mt-1 gap-1">
+              <span class="font-extrabold text-slate-900 text-xs">${money(product.price)}</span>
+              <span class="text-[9px] font-bold ${isOut ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'} px-1 py-0.5 rounded-md">${isOut ? 'Agotado' : (stockText || '+ Add')}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    // AÑADIR PRODUCTOS
+    function handleProductClick(productId) {
+      const product = PRODUCTS.find(p => p.id === productId);
+      if(!product) return;
+      if(product.available === false || (product.stock !== null && Number(product.stock) <= 0)) { showToast('Producto agotado'); return; }
+      addToCart(product);
+    }
+
+    function addToCart(product) {
+      const order = getActiveOrder();
+      const cartKey = String(product.id);
+      const existing = order.cart.find(i => i.cartKey === cartKey);
+
+      if(existing) {
+        if(product.stock !== null && existing.quantity >= Number(product.stock)) { showToast('No hay más existencia disponible'); return; }
+        existing.quantity += 1;
+      } else {
+        order.cart.push({
+          cartKey,
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1
+        });
+      }
+
+      saveOpenOrders();
+      showToast(`Añadido a ${order.name}`);
+      renderOrderTabs();
+      updateCartUI();
+    }
+
+    function updateQuantity(cartKey, delta) {
+      const order = getActiveOrder();
+      const item = order.cart.find(i => i.cartKey === cartKey);
+      if(!item) return;
+
+      const product = PRODUCTS.find(p => Number(p.id) === Number(item.id));
+      if(delta > 0 && product && product.stock !== null && item.quantity >= Number(product.stock)) { showToast('Límite de existencia alcanzado'); return; }
+      item.quantity += delta;
+      if(item.quantity <= 0) {
+        order.cart = order.cart.filter(i => i.cartKey !== cartKey);
+      }
+      saveOpenOrders();
+      renderOrderTabs();
+      updateCartUI();
+    }
+
+    // ACTUALIZAR DETALLE DE NOTA
+    function updateCartUI() {
+      const order = getActiveOrder();
+      const container = document.getElementById('cart-items');
+      const checkoutBtn = document.getElementById('checkout-btn');
+      const badge = document.getElementById('cart-badge');
+
+      // Nombre de orden
+      document.getElementById('order-name-input').value = order.name;
+
+      // Botones tipo servicio
+      const btnAqui = document.getElementById('btn-aqui');
+      const btnLlevar = document.getElementById('btn-llevar');
+      if(order.serviceType === 'Comer Aquí') {
+        btnAqui.className = "flex-1 py-1 rounded-lg bg-white shadow-sm text-slate-900 font-bold transition-all";
+        btnLlevar.className = "flex-1 py-1 rounded-lg text-slate-500 hover:text-slate-900 transition-all";
+      } else {
+        btnLlevar.className = "flex-1 py-1 rounded-lg bg-white shadow-sm text-slate-900 font-bold transition-all";
+        btnAqui.className = "flex-1 py-1 rounded-lg text-slate-500 hover:text-slate-900 transition-all";
+      }
+
+      // Badge de carrito
+      const totalItems = order.cart.reduce((acc, i) => acc + i.quantity, 0);
+      if(totalItems > 0) {
+        badge.innerText = totalItems;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      if(order.cart.length === 0) {
+        container.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-center text-slate-400 py-10">
+            <i data-lucide="shopping-bag" class="w-10 h-10 mb-2 opacity-30"></i>
+            <p class="text-xs font-semibold">Nota sin productos</p>
+            <p class="text-[10px] text-slate-400">Añade tacos o bebidas desde el catálogo</p>
+          </div>
+        `;
+        checkoutBtn.disabled = true;
+      } else {
+        container.innerHTML = order.cart.map(item => `
+          <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex-1 min-w-0 pr-2">
+              <h4 class="font-bold text-slate-900 text-xs truncate">${item.name}</h4>
+              <p class="text-[10px] text-slate-400 font-medium mt-0.5">${money(item.price)} c/u</p>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <div class="flex items-center bg-slate-50 rounded-lg border border-slate-200">
+                <button onclick="updateQuantity('${item.cartKey}', -1)" class="px-2 py-0.5 text-slate-600 hover:text-slate-900 font-bold text-xs">-</button>
+                <span class="px-1 text-xs font-bold text-slate-900">${item.quantity}</span>
+                <button onclick="updateQuantity('${item.cartKey}', 1)" class="px-2 py-0.5 text-slate-600 hover:text-slate-900 font-bold text-xs">+</button>
+              </div>
+              <span class="font-extrabold text-slate-900 text-xs w-12 text-right">
+                ${money(item.price * item.quantity)}
+              </span>
+            </div>
+          </div>
+        `).join('');
+        checkoutBtn.disabled = false;
+      }
+
+      // TOTALES
+      const total = getOrderTotal(order);
+
+      document.getElementById('total-val').innerText = money(total);
+
+      lucide.createIcons();
+    }
+
+    // COBRO DE LA NOTA SELECCIONADA
+    function getOrderTotal(order) {
+      if(!order || !Array.isArray(order.cart)) return 0;
+      return order.cart.reduce((total, item) => {
+        return total + ((Number(item.price) || 0) * (Number(item.quantity) || 0));
+      }, 0);
+    }
+
+    function openCheckoutModal() {
+      const order = getActiveOrder();
+      const total = getOrderTotal(order);
+
+      document.getElementById('modal-total-pay').innerText = money(total);
+      document.getElementById('amount-received').value = '';
+      document.getElementById('payment-reference').value = '';
+      document.getElementById('change-val').innerText = money(0);
+
+      // Reset foto
+      photoDataUrl = null;
+      document.getElementById('photo-preview').classList.add('hidden');
+      document.getElementById('photo-placeholder').classList.remove('hidden');
+
+      setPaymentMethod('efectivo');
+      document.getElementById('checkout-modal').classList.remove('hidden');
+    }
+
+    function closeCheckoutModal() {
+      document.getElementById('checkout-modal').classList.add('hidden');
+    }
+
+    function setPaymentMethod(method) {
+      paymentMethod = method;
+      const cashSection = document.getElementById('cash-section');
+      const refSection = document.getElementById('ref-section');
+
+      ['efectivo', 'tarjeta', 'transferencia'].forEach(m => {
+        const btn = document.getElementById(`pay-${m}`);
+        if(m === method) {
+          btn.className = "py-2 rounded-xl border-2 border-slate-900 bg-slate-900 text-white font-bold text-[11px] transition-all";
+        } else {
+          btn.className = "py-2 rounded-xl border-2 border-slate-200 text-slate-700 font-bold text-[11px] transition-all";
+        }
+      });
+
+      if(method === 'efectivo') {
+        cashSection.classList.remove('hidden');
+        refSection.classList.add('hidden');
+      } else {
+        cashSection.classList.add('hidden');
+        refSection.classList.remove('hidden');
+      }
+    }
+
+    function calculateChange() {
+      const order = getActiveOrder();
+      const total = getOrderTotal(order);
+      const received = parseFloat(document.getElementById('amount-received').value) || 0;
+      const change = received - total;
+
+      document.getElementById('change-val').innerText = money(change > 0 ? change : 0);
+    }
+
+    // PREVISUALIZACIÓN DE FOTO DEL TICKET/VOUCHER
+    function previewPhoto(event) {
+      const file = event.target.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          photoDataUrl = e.target.result;
+          const img = document.getElementById('photo-preview');
+          img.src = photoDataUrl;
+          img.classList.remove('hidden');
+          document.getElementById('photo-placeholder').classList.add('hidden');
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // GESTIÓN DE PRECIOS
+    function openPriceModal() {
+      renderPriceList();
+      document.getElementById('price-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closePriceModal() {
+      document.getElementById('price-modal').classList.add('hidden');
+    }
+
+    function renderPriceList() {
+      const container = document.getElementById('price-list');
+      if (!container) return;
+      const search = (document.getElementById('inventory-search')?.value || '').trim().toLowerCase();
+      const category = document.getElementById('inventory-filter')?.value || 'todos';
+      const filtered = PRODUCTS.filter(product => (!search || product.name.toLowerCase().includes(search)) && (category === 'todos' || product.category === category));
+      const tacos = PRODUCTS.filter(p => p.category === 'tacos').length;
+      const drinks = PRODUCTS.filter(p => p.category === 'bebidas').length;
+      const average = PRODUCTS.length ? PRODUCTS.reduce((sum,p)=>sum+Number(p.price||0),0)/PRODUCTS.length : 0;
+      document.getElementById('inventory-count').innerText = PRODUCTS.length;
+      document.getElementById('inventory-tacos').innerText = tacos;
+      document.getElementById('inventory-drinks').innerText = drinks;
+      document.getElementById('inventory-average').innerText = money(average);
+      if (!filtered.length) { container.innerHTML='<div class="products-empty"><i data-lucide="package-open" class="w-8 h-8"></i><p>No se encontraron productos</p><span>Prueba con otro nombre o categoría.</span></div>'; lucide.createIcons(); return; }
+      container.innerHTML = filtered.map(product => {
+        const stockControlled = product.stock !== null && product.stock !== undefined;
+        const out = product.available === false || (stockControlled && Number(product.stock) <= 0);
+        const stockClass = out ? 'inventory-out' : (stockControlled && Number(product.stock) <= 5 ? 'inventory-stock-low' : 'inventory-ok');
+        const categoryLabel = product.category === 'tacos' ? 'Tacos' : product.category === 'bebidas' ? 'Bebidas' : 'Otros';
+        const safeName = String(product.name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return `<article class="product-admin-card ${out ? 'is-out' : ''}"><div class="product-admin-main"><div class="product-admin-icon"><i data-lucide="${product.icon || 'package'}" class="w-5 h-5"></i></div><div class="min-w-0 flex-1"><div class="flex items-start justify-between gap-2"><div class="min-w-0 flex-1"><input id="name-input-${product.id}" type="text" value="${safeName}" class="product-name-input"><div class="flex flex-wrap items-center gap-1.5 mt-1"><span class="product-id">ID #${product.id}</span><span class="product-category-pill">${categoryLabel}</span><span class="product-status-pill ${stockClass}">${out ? 'Agotado' : 'Disponible'}</span></div></div><button type="button" onclick="deleteProduct(${product.id}); event.stopPropagation();" class="product-delete" title="Eliminar producto"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></div></div><div class="product-admin-fields"><div class="product-field"><label>Categoría</label><select id="category-input-${product.id}"><option value="tacos" ${product.category==='tacos'?'selected':''}>Tacos</option><option value="bebidas" ${product.category==='bebidas'?'selected':''}>Bebidas</option><option value="otros" ${product.category==='otros'?'selected':''}>Otros</option></select></div><div class="product-field price-field"><label>Precio final</label><div class="price-input-wrap"><span>$</span><input type="number" min="0" step="0.01" id="price-input-${product.id}" value="${Number(product.price).toFixed(2)}"></div></div><div class="product-field"><label>Disponibilidad</label><select id="status-input-${product.id}"><option value="1" ${product.available!==false?'selected':''}>Disponible</option><option value="0" ${product.available===false?'selected':''}>Agotado</option></select></div><div class="product-field stock-field"><label class="stock-toggle"><input id="track-stock-${product.id}" type="checkbox" ${stockControlled?'checked':''}><span>Controlar existencia</span></label><input type="number" min="0" step="1" id="stock-input-${product.id}" value="${stockControlled?Number(product.stock):0}" ${stockControlled?'':'disabled'} placeholder="Cantidad" class="stock-input ${stockControlled?'':'is-disabled'}" onchange="this.previousElementSibling.checked = true"></div></div></article>`;
+      }).join('');
+      filtered.forEach(product => { const cb=document.getElementById(`track-stock-${product.id}`); const input=document.getElementById(`stock-input-${product.id}`); cb?.addEventListener('change',()=>{input.disabled=!cb.checked; input.classList.toggle('is-disabled',!cb.checked); if(!cb.checked) input.value=0;}); });
+      lucide.createIcons();
+    }
+
+    function saveProductChanges() {
+      let invalid = false;
+      const visibleProducts = PRODUCTS.filter(product => document.getElementById(`price-input-${product.id}`));
+      visibleProducts.forEach(product => {
+        const price = parseFloat(document.getElementById(`price-input-${product.id}`).value);
+        const name = document.getElementById(`name-input-${product.id}`).value.trim();
+        const category = document.getElementById(`category-input-${product.id}`).value;
+        const track = document.getElementById(`track-stock-${product.id}`).checked;
+        const stock = Math.max(0, parseInt(document.getElementById(`stock-input-${product.id}`).value || '0',10));
+        const available = document.getElementById(`status-input-${product.id}`).value === '1';
+        if(isNaN(price) || price < 0 || !name) { invalid=true; return; }
+        product.price=price; product.name=name; product.category=category; product.stock=track ? stock : null; product.available=available;
+      });
+      if(invalid){ showToast('Revisa nombres y precios'); return; }
+      saveProductPricesToStorage(); saveProductsData(); renderPriceList(); renderProducts(); updateCartUI(); showToast('¡Productos actualizados!');
+    }
+
+    function openAddProductModal() {
+      document.getElementById('new-product-name').value = '';
+      document.getElementById('new-product-price').value = '';
+      document.getElementById('new-product-category').value = 'tacos';
+      document.getElementById('new-product-track-stock').checked = false;
+      document.getElementById('new-product-stock').value = 0;
+      document.getElementById('new-product-stock-wrap').classList.add('hidden');
+      document.getElementById('add-product-modal').classList.remove('hidden');
+      lucide.createIcons();
+      setTimeout(() => document.getElementById('new-product-name').focus(), 50);
+    }
+
+    function toggleNewProductStock() {
+      const checked = document.getElementById('new-product-track-stock').checked;
+      document.getElementById('new-product-stock-wrap').classList.toggle('hidden', !checked);
+    }
+
+    function closeAddProductModal() {
+      document.getElementById('add-product-modal').classList.add('hidden');
+    }
+
+    function addNewProduct() {
+      const name = document.getElementById('new-product-name').value.trim();
+      const price = parseFloat(document.getElementById('new-product-price').value);
+      const category = document.getElementById('new-product-category').value;
+
+      if (!name) { showToast('Escribe el nombre del producto'); return; }
+      if (isNaN(price) || price < 0) { showToast('Ingresa un precio válido'); return; }
+
+      const newId = PRODUCTS.reduce((max, product) => Math.max(max, Number(product.id) || 0), 0) + 1;
+      const newProduct = {
+        id: newId,
+        name,
+        category,
+        price,
+        icon: category === 'bebidas' ? 'cup-soda' : category === 'tacos' ? 'utensils' : 'package',
+        stock: document.getElementById('new-product-track-stock').checked ? Math.max(0, parseInt(document.getElementById('new-product-stock').value || '0',10)) : null,
+        available: true
+      };
+
+      PRODUCTS.push(newProduct);
+      DEFAULT_PRICES[newId] = price;
+      saveProductPricesToStorage();
+      saveProductsData();
+      closeAddProductModal();
+      renderPriceList();
+      renderProducts();
+      showToast(`¡${name} añadido al catálogo!`);
+    }
+
+    function deleteProduct(productId) {
+      const product = PRODUCTS.find(p => p.id === Number(productId));
+      if (!product) {
+        showToast('Producto no encontrado');
+        return;
+      }
+
+      const orderItems = openOrders.reduce((count, order) => {
+        return count + order.cart.filter(item => Number(item.id) === Number(product.id)).length;
+      }, 0);
+
+      const message = orderItems > 0
+        ? `¿Eliminar "${product.name}" del catálogo?\n\nEste producto está presente en ${orderItems} línea(s) de notas abiertas. Al eliminarlo del catálogo, esas líneas permanecerán en las notas actuales y podrán cobrarse normalmente.`
+        : `¿Eliminar "${product.name}" del catálogo?\n\nEsta acción quitará el producto del catálogo y de la lista de precios guardada. Los tickets y ventas ya registrados no se modificarán.`;
+
+      if (!confirm(message)) return;
+
+      const index = PRODUCTS.findIndex(p => p.id === Number(product.id));
+      if (index === -1) return;
+
+      PRODUCTS.splice(index, 1);
+
+      delete DEFAULT_PRICES[product.id];
+
+      saveProductPricesToStorage();
+      saveProductsData();
+
+      renderPriceList();
+      renderProducts();
+      updateCartUI();
+
+      showToast(`"${product.name}" eliminado del catálogo`);
+    }
+
+    function resetProductPrices() {
+      const confirmed = confirm('¿Restablecer todos los precios originales?');
+      if (!confirmed) return;
+
+      PRODUCTS.forEach(product => {
+        if (DEFAULT_PRICES[product.id] !== undefined) {
+          product.price = DEFAULT_PRICES[product.id];
+        }
+      });
+
+      saveProductPricesToStorage();
+      saveProductsData();
+      renderPriceList();
+      renderProducts();
+      updateCartUI();
+      showToast('Precios restablecidos');
+    }
+
+    // CORTE DEL DÍA
+    function getDailySummary() {
+      const summary = {
+        count: dailySales.length,
+        total: 0,
+        cash: 0,
+        card: 0,
+        transfer: 0
+      };
+
+      dailySales.forEach(sale => {
+        const saleTotal = Number(sale.total) || 0;
+        summary.total += saleTotal;
+
+        if(sale.paymentMethod === 'efectivo') summary.cash += saleTotal;
+        if(sale.paymentMethod === 'tarjeta') summary.card += saleTotal;
+        if(sale.paymentMethod === 'transferencia') summary.transfer += saleTotal;
+      });
+
+      return summary;
+    }
+
+    function formatTime(dateValue) {
+      return new Date(dateValue).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function openDailyCutModal() {
+      const summary = getDailySummary();
+      const dateText = new Date().toLocaleDateString('es-MX', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      document.getElementById('daily-cut-date').innerText = dateText;
+      document.getElementById('cut-sales-count').innerText = summary.count;
+      document.getElementById('cut-total').innerText = money(summary.total);
+      document.getElementById('cut-cash').innerText = money(summary.cash);
+      document.getElementById('cut-card').innerText = money(summary.card);
+      document.getElementById('cut-transfer').innerText = money(summary.transfer);
+
+      const firstSale = dailySales.length ? dailySales[0].date : null;
+      const lastSale = dailySales.length ? dailySales[dailySales.length - 1].date : null;
+      document.getElementById('cut-first-sale').innerText = firstSale ? formatTime(firstSale) : '—';
+      document.getElementById('cut-last-sale').innerText = lastSale ? formatTime(lastSale) : '—';
+
+      document.getElementById('daily-cut-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeDailyCutModal() {
+      document.getElementById('daily-cut-modal').classList.add('hidden');
+    }
+
+    function printDailyCut() {
+      const summary = getDailySummary();
+      const now = new Date();
+
+      document.getElementById('cut-ticket-business').innerText = appSettings.ticketTitle;
+      document.getElementById('cut-ticket-date').innerText = now.toLocaleString('es-MX');
+      document.getElementById('cut-ticket-sales').innerText = `VENTAS: ${summary.count}`;
+      document.getElementById('cut-ticket-payment-summary').innerHTML = `
+        <div>EFECTIVO: ${money(summary.cash)}</div>
+        <div>TARJETA: ${money(summary.card)}</div>
+        <div>TRANSFERENCIA: ${money(summary.transfer)}</div>
+      `;
+
+      document.getElementById('cut-ticket-sales-list').innerHTML = dailySales.map((sale, index) => `
+        <div>
+          <div class="flex justify-between">
+            <span>#${index + 1} ${formatTime(sale.date)}</span>
+            <span>${money(sale.total)}</span>
+          </div>
+          <div class="text-[9px]">${sale.orderName || 'Sin nombre'} · ${(sale.paymentMethod || '').toUpperCase()}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('cut-ticket-total').innerText = `TOTAL VENDIDO: ${money(summary.total)}`;
+
+      closeDailyCutModal();
+      document.body.classList.add('printing-daily-cut');
+      requestAnimationFrame(() => {
+        window.print();
+        setTimeout(() => {
+          document.body.classList.remove('printing-daily-cut');
+          openDailyCutModal();
+        }, 300);
+      });
+    }
+
+    function generateDailySalesPDF() {
+      if (!dailySales.length) {
+        showToast('No hay ventas registradas hoy');
+        return;
+      }
+
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('No se pudo cargar el generador PDF');
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const pageWidth = 80;
+      const margin = 5;
+      const line = 4.2;
+      const height = Math.max(75, 42 + (dailySales.length * 12) + 18);
+
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [pageWidth, height]
+      });
+
+      let y = 8;
+      const center = (text) => doc.text(String(text), pageWidth / 2, y, { align: 'center' });
+      const left = (text) => doc.text(String(text), margin, y);
+      const right = (text) => doc.text(String(text), pageWidth - margin, y, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      center(appSettings.ticketTitle);
+      y += 5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      center('CORTE DEL DÍA');
+      y += 4;
+      center(new Date().toLocaleString('es-MX'));
+      y += 5;
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 5;
+
+      const summary = getDailySummary();
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      left(`VENTAS: ${dailySales.length}`);
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      left(`EFECTIVO: ${money(summary.cash)}`);
+      y += line;
+      left(`TARJETA: ${money(summary.card)}`);
+      y += line;
+      left(`TRANSFERENCIA: ${money(summary.transfer)}`);
+      y += 5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+
+      dailySales.forEach((sale, index) => {
+        const name = String(sale.orderName || 'Sin nombre').slice(0, 28);
+        const method = String(sale.paymentMethod || '').toUpperCase();
+
+        left(`#${index + 1} ${formatTime(sale.date)}`);
+        right(money(sale.total));
+        y += line;
+        left(name);
+        y += line;
+        left(method);
+        y += line;
+        doc.setDrawColor(190);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += line;
+      });
+
+      doc.setDrawColor(0);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      right(`TOTAL VENDIDO: ${money(getDailySummary().total)}`);
+      y += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      center('Fin del corte');
+
+      const safeName = String(appSettings.businessName || 'PDV').replace(/[^a-z0-9áéíóúüñ_-]+/gi, '_').replace(/^_+|_+$/g, '');
+      doc.save(`Corte_${safeName || 'PDV'}_${getTodayKey()}.pdf`);
+      showToast('PDF del corte generado');
+    }
+
+    function confirmNewDay() {
+      const summary = getDailySummary();
+
+      if(summary.count === 0) {
+        dailySales = [];
+        saveDailySales();
+        showToast('No hay ventas para cerrar');
+        closeDailyCutModal();
+        return;
+      }
+
+      const confirmed = confirm(
+        `¿Deseas cerrar el día?\\n\\n` +
+        `Ventas: ${summary.count}\\n` +
+        `Total: $${summary.total.toFixed(2)}\\n\\n` +
+        `El corte del día se cerrará, pero el historial general de ventas se conservará.`
+      );
+
+      if(!confirmed) return;
+
+      dailySales = [];
+      saveDailySales();
+
+      closeDailyCutModal();
+      showToast('¡Corte cerrado! Nuevo día iniciado');
+    }
+
+    function processPayment() {
+      const order = getActiveOrder();
+      const total = getOrderTotal(order);
+      const refVal = document.getElementById('payment-reference').value;
+
+      // DATOS DE IMPRESIÓN DEL TICKET
+      document.getElementById('ticket-date').innerText = new Date().toLocaleString();
+      document.getElementById('ticket-order-name').innerText = `CLIENTE/MESA: ${order.name.toUpperCase()}`;
+      document.getElementById('ticket-type').innerText = `ORDEN: ${order.serviceType.toUpperCase()} (${paymentMethod.toUpperCase()})`;
+      
+      document.getElementById('ticket-items').innerHTML = order.cart.map(item => `
+        <div class="flex justify-between">
+          <span>${item.quantity}x ${item.name}</span>
+          <span>${money(item.price * item.quantity)}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('ticket-total').innerText = `TOTAL: ${money(total)}`;
+
+      const refInfoContainer = document.getElementById('ticket-ref-info');
+      if(paymentMethod !== 'efectivo' && refVal) {
+        document.getElementById('ticket-ref-val').innerText = `REF/AUTORIZACIÓN: ${refVal}`;
+        refInfoContainer.classList.remove('hidden');
+      } else {
+        refInfoContainer.classList.add('hidden');
+      }
+
+      closeCheckoutModal();
+      
+      // Imprimir únicamente el ticket de esta venta.
+      document.body.classList.remove('printing-daily-cut');
+      requestAnimationFrame(() => window.print());
+
+      // REGISTRAR VENTA EN EL CORTE DEL DÍA
+      dailySales.push({
+        id: `${Date.now()}-${order.id}`,
+        date: new Date().toISOString(),
+        orderName: order.name,
+        serviceType: order.serviceType,
+        paymentMethod,
+        total,
+        items: order.cart.map(item => ({ name: item.name, quantity: item.quantity, price: Number(item.price) || 0 })),
+        reference: paymentMethod !== 'efectivo' ? refVal : ''
+      });
+      saveDailySales();
+      salesHistory.push(dailySales[dailySales.length - 1]);
+      saveSalesHistory();
+      order.cart.forEach(item => { const p = PRODUCTS.find(x => Number(x.id) === Number(item.id)); if(p && p.stock !== null && p.stock !== undefined) p.stock = Math.max(0, Number(p.stock) - Number(item.quantity)); });
+      saveProductsData();
+      renderProducts();
+
+      showToast(`¡Nota ${order.name} cobrada!`);
+
+      // Eliminar nota cobrada y cambiar a otra
+      openOrders = openOrders.filter(o => o.id !== activeOrderId);
+      if(openOrders.length === 0) {
+        orderCounter++;
+        openOrders.push({ id: orderCounter, name: `Nota ${orderCounter}`, color: '#2563eb', serviceType: "Comer Aquí", cart: [] });
+      }
+      activeOrderId = openOrders[0].id;
+      saveOpenOrders();
+
+      renderOrderTabs();
+      updateCartUI();
+      switchMainTab('menu');
+    }
+
+    // HISTORIAL, RESUMEN Y RESPALDO
+    function openSalesHistoryModal() {
+      document.getElementById('history-search').value = '';
+      document.getElementById('history-period').value = 'all';
+      document.getElementById('history-payment').value = 'all';
+      renderSalesHistory();
+      document.getElementById('sales-history-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeSalesHistoryModal() { document.getElementById('sales-history-modal').classList.add('hidden'); }
+    function renderSalesHistory() {
+      const query=(document.getElementById('history-search')?.value||'').trim().toLowerCase();
+      const period=document.getElementById('history-period')?.value||'all';
+      const payment=document.getElementById('history-payment')?.value||'all';
+      const today=getTodayKey();
+      const filtered=salesHistory.map((sale,idx)=>({sale,idx})).filter(({sale})=>{
+        const hay=`${sale.orderName||''} ${sale.paymentMethod||''} ${sale.id||''} ${(sale.items||[]).map(i=>i.name).join(' ')}`.toLowerCase();
+        const dateKey=new Date(sale.date).toISOString().slice(0,10);
+        return (!query||hay.includes(query)) && (period!=='today'||dateKey===today) && (payment==='all'||sale.paymentMethod===payment);
+      }).reverse();
+      document.getElementById('history-summary').innerText=`${salesHistory.length} venta(s) guardadas · ${filtered.length} mostradas`;
+      const list=document.getElementById('sales-history-list');
+      if(!filtered.length){list.innerHTML='<div class="text-center text-xs text-slate-400 py-10">No hay ventas que coincidan.</div>';return;}
+      list.innerHTML=filtered.map(({sale,idx})=>{ const items=Array.isArray(sale.items)?sale.items.map(i=>`${i.quantity}× ${i.name}`).join(', '):'Detalle no disponible'; return `<div class="border border-slate-200 rounded-xl p-3 bg-white"><div class="flex justify-between gap-3"><div><b class="text-xs">Venta #${idx+1}</b><span class="text-[10px] text-slate-400 ml-2">${new Date(sale.date).toLocaleDateString('es-MX')} ${formatTime(sale.date)}</span><p class="text-[10px] text-slate-500 mt-1">${sale.orderName||'Sin nombre'} · ${(sale.paymentMethod||'').toUpperCase()}</p></div><b class="text-sm">${money(sale.total)}</b></div><p class="text-[9px] text-slate-400 mt-2">${items}</p><button onclick="reprintSaleHistory(${idx})" class="mt-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-[10px] font-bold"><i data-lucide="printer" class="w-3 h-3 inline"></i> Reimprimir</button></div>`;}).join('');
+      lucide.createIcons();
+    }
+    function reprintSaleHistory(index) { reprintSale(index); }
+    function reprintSale(index) {
+      const sale = salesHistory[index];
+      if (!sale) return;
+      document.getElementById('ticket-date').innerText = new Date(sale.date).toLocaleString();
+      document.getElementById('ticket-order-name').innerText = `CLIENTE/MESA: ${(sale.orderName || '').toUpperCase()}`;
+      document.getElementById('ticket-type').innerText = `ORDEN: ${(sale.serviceType || '').toUpperCase()} (${(sale.paymentMethod || '').toUpperCase()})`;
+      document.getElementById('ticket-items').innerHTML = (sale.items || []).map(item => `<div class="flex justify-between"><span>${item.quantity}x ${item.name}</span><span>${money(item.price * item.quantity)}</span></div>`).join('');
+      document.getElementById('ticket-total').innerText = `TOTAL: ${money(sale.total)}`;
+      document.getElementById('ticket-ref-info').classList.add('hidden');
+      closeSalesHistoryModal();
+      document.body.classList.remove('printing-daily-cut');
+      requestAnimationFrame(() => window.print());
+    }
+
+    function openDashboardModal() {
+      const s = getDailySummary();
+      document.getElementById('dash-count').innerText = s.count;
+      document.getElementById('dash-total').innerText = money(s.total);
+      document.getElementById('dash-cash').innerText = money(s.cash);
+      document.getElementById('dash-digital').innerText = money(s.card + s.transfer);
+      document.getElementById('dash-pay-cash').innerText = money(s.cash);
+      document.getElementById('dash-pay-card').innerText = money(s.card);
+      document.getElementById('dash-pay-transfer').innerText = money(s.transfer);
+      document.getElementById('dash-average').innerText = money(s.count ? s.total / s.count : 0);
+      document.getElementById('dash-first').innerText = dailySales.length ? formatTime(dailySales[0].date) : '—';
+      document.getElementById('dash-last').innerText = dailySales.length ? formatTime(dailySales[dailySales.length - 1].date) : '—';
+      const products = {};
+      dailySales.forEach(sale => (sale.items || []).forEach(item => { products[item.name] = (products[item.name] || 0) + (Number(item.quantity) || 0); }));
+      const top = Object.entries(products).sort((a,b) => b[1]-a[1]).slice(0,5);
+      document.getElementById('dash-top-products').innerHTML = top.length ? top.map(([name,qty],i)=>`<div class="flex justify-between"><span>${i+1}. ${name}</span><b>${qty}</b></div>`).join('') : '<span class="text-slate-400">Aún no hay productos vendidos.</span>';
+      document.getElementById('dashboard-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeDashboardModal() { document.getElementById('dashboard-modal').classList.add('hidden'); }
+
+    function openBackupModal() { renderDataStats(); document.getElementById('backup-modal').classList.remove('hidden'); lucide.createIcons(); }
+    function renderDataStats() {
+      const el=document.getElementById('data-stats'); if(!el) return;
+      el.innerHTML=`<div class="admin-stat bg-slate-50 border border-slate-200 rounded-xl p-3"><span class="text-[9px] uppercase font-bold text-slate-400">Productos</span><b class="block text-lg">${PRODUCTS.length}</b></div><div class="admin-stat bg-slate-50 border border-slate-200 rounded-xl p-3"><span class="text-[9px] uppercase font-bold text-slate-400">Notas abiertas</span><b class="block text-lg">${openOrders.length}</b></div><div class="admin-stat bg-slate-50 border border-slate-200 rounded-xl p-3"><span class="text-[9px] uppercase font-bold text-slate-400">Ventas hoy</span><b class="block text-lg">${dailySales.length}</b></div><div class="admin-stat bg-slate-50 border border-slate-200 rounded-xl p-3"><span class="text-[9px] uppercase font-bold text-slate-400">Historial</span><b class="block text-lg">${salesHistory.length}</b></div>`;
+    }
+    function clearOpenOrdersData() {
+      if(!confirm('¿Borrar todas las notas abiertas?')) return;
+      orderCounter++; openOrders=[{id:orderCounter,name:`Nota ${orderCounter}`,color:'#2563eb',serviceType:'Comer Aquí',cart:[]}]; activeOrderId=openOrders[0].id; saveOpenOrders(); renderOrderTabs(); updateCartUI(); renderDataStats(); showToast('Notas abiertas eliminadas');
+    }
+    function clearSalesHistory() {
+      if(!confirm('¿Borrar todo el historial de ventas? Esta acción no se puede deshacer.')) return;
+      salesHistory=[]; dailySales=[]; saveSalesHistory(); saveDailySales(); renderDataStats(); showToast('Historial eliminado');
+    }
+    function closeBackupModal() { document.getElementById('backup-modal').classList.add('hidden'); }
+    function exportBackup() {
+      const backup = { version: 3, exportedAt: new Date().toISOString(), products: PRODUCTS, openOrders, activeOrderId, orderCounter, dailySales, salesHistory, settings: appSettings };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Respaldo_Mariscos_PDV_${getTodayKey()}.json`; a.click(); URL.revokeObjectURL(a.href);
+      showToast('Respaldo descargado');
+    }
+    function importBackup(event) {
+      const file = event.target.files?.[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data.products) || !Array.isArray(data.dailySales) || !Array.isArray(data.openOrders)) throw new Error('Formato inválido');
+          if (!confirm('¿Restaurar este respaldo? Se reemplazarán los datos actuales del PDV.')) return;
+          localStorage.setItem(PRODUCTS_DATA_KEY, JSON.stringify(data.products));
+          localStorage.setItem(PRODUCT_PRICES_KEY, JSON.stringify(Object.fromEntries(data.products.map(p => [p.id, p.price]))));
+          localStorage.setItem(OPEN_ORDERS_KEY, JSON.stringify(data.openOrders));
+          localStorage.setItem(ACTIVE_ORDER_KEY, String(data.activeOrderId || data.openOrders[0]?.id || 1));
+          localStorage.setItem(DAILY_SALES_KEY, JSON.stringify({ date: getTodayKey(), sales: data.dailySales }));
+          localStorage.setItem(SALES_HISTORY_KEY, JSON.stringify(Array.isArray(data.salesHistory) ? data.salesHistory : data.dailySales));
+          if (data.settings) localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
+          location.reload();
+        } catch (error) { showToast('El respaldo no es válido'); }
+      };
+      reader.readAsText(file);
+    }
+
+    // NOTIFICACIÓN TOAST
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').innerText = message;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2200);
+    }
+  </script>
+
+  <!-- PWA: registra el Service Worker sin modificar la lógica del PDV -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .catch(error => console.warn('No se pudo registrar la PWA:', error));
+      });
+    }
+  </script>
+</body>
+</html>
